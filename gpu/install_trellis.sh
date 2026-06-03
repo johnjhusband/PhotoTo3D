@@ -56,19 +56,28 @@ pip install xformers==0.0.28.post1 --index-url https://download.pytorch.org/whl/
 log "TRELLIS setup.sh: spconv"
 . ./setup.sh --spconv
 
-# Every from-source CUDA extension (nvdiffrast, diffoctreerast, mipgaussian) imports torch in its
-# build step. pip's PEP517 build isolation hides the installed torch -> 'No module named torch'.
-# Disable build isolation for all of them (torch/ninja/setuptools/wheel are already installed).
-export PIP_NO_BUILD_ISOLATION=1
+# Install the CUDA extensions DIRECTLY (not via setup.sh), because setup.sh installs them without
+# --no-build-isolation (their setup.py imports torch and fails under pip's build isolation) and its
+# kaolin branch only knows up to torch 2.4.0 (silently skips 2.4.1). We do it explicitly.
+export CUDA_HOME=/usr/local/cuda
+export PATH="$CUDA_HOME/bin:$PATH"
 pip install --upgrade setuptools wheel ninja
+mkdir -p /tmp/extensions
 
-log "TRELLIS setup.sh: nvdiffrast"
-. ./setup.sh --nvdiffrast
-log "TRELLIS setup.sh: kaolin"
-. ./setup.sh --kaolin
-log "TRELLIS setup.sh: diffoctreerast + mipgaussian (CUDA builds)"
-. ./setup.sh --diffoctreerast
-. ./setup.sh --mipgaussian
+log "nvdiffrast (--no-build-isolation)"
+git clone https://github.com/NVlabs/nvdiffrast.git /tmp/extensions/nvdiffrast
+pip install --no-build-isolation /tmp/extensions/nvdiffrast
+
+log "kaolin (torch-2.4.0_cu121 wheels — compatible with 2.4.1)"
+pip install kaolin -f https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.4.0_cu121.html
+
+log "diffoctreerast (--no-build-isolation)"
+git clone --recurse-submodules https://github.com/JeffreyXiang/diffoctreerast.git /tmp/extensions/diffoctreerast
+pip install --no-build-isolation /tmp/extensions/diffoctreerast
+
+log "mip-splatting diff-gaussian-rasterization (--no-build-isolation)"
+git clone https://github.com/autonomousvision/mip-splatting.git /tmp/extensions/mip-splatting
+pip install --no-build-isolation /tmp/extensions/mip-splatting/submodules/diff-gaussian-rasterization/
 
 # Mesh post-processing libs used by to_glb / our repair step
 log "mesh export deps"
