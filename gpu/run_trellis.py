@@ -11,7 +11,7 @@ Usage:
 Outputs in <out_dir>: model.glb, model.stl, model.3mf, preview.png, preview.mp4
 """
 import os, sys, glob
-os.environ.setdefault("ATTN_BACKEND", "flash-attn")
+os.environ.setdefault("ATTN_BACKEND", "xformers")
 os.environ.setdefault("SPCONV_ALGO", "native")
 
 from PIL import Image

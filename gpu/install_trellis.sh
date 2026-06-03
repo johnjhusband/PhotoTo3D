@@ -5,7 +5,7 @@ set -euo pipefail
 log() { echo "[trellis-install $(date -u +%H:%M:%S)] $*"; }
 export DEBIAN_FRONTEND=noninteractive
 export TORCH_CUDA_ARCH_LIST="8.6"          # RTX 3090
-export ATTN_BACKEND=flash-attn
+export ATTN_BACKEND=xformers                # xformers: prebuilt wheels, no flash-attn source build
 export SPCONV_ALGO=native
 export FORCE_CUDA=1
 
@@ -47,8 +47,8 @@ pip install "open3d==0.19.0" "werkzeug>=3.0.0"
 
 log "TRELLIS setup.sh: basic deps"
 . ./setup.sh --basic
-log "TRELLIS setup.sh: flash-attn"
-. ./setup.sh --flash-attn
+log "xformers (attention backend; matches torch 2.4.1, prebuilt cu121 wheel — no source build)"
+pip install xformers==0.0.28.post1 --index-url https://download.pytorch.org/whl/cu121
 log "TRELLIS setup.sh: spconv"
 . ./setup.sh --spconv
 log "TRELLIS setup.sh: nvdiffrast"
