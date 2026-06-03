@@ -51,6 +51,13 @@ log "xformers (attention backend; matches torch 2.4.1, prebuilt cu121 wheel — 
 pip install xformers==0.0.28.post1 --index-url https://download.pytorch.org/whl/cu121
 log "TRELLIS setup.sh: spconv"
 . ./setup.sh --spconv
+
+# Every from-source CUDA extension (nvdiffrast, diffoctreerast, mipgaussian) imports torch in its
+# build step. pip's PEP517 build isolation hides the installed torch -> 'No module named torch'.
+# Disable build isolation for all of them (torch/ninja/setuptools/wheel are already installed).
+export PIP_NO_BUILD_ISOLATION=1
+pip install --upgrade setuptools wheel ninja
+
 log "TRELLIS setup.sh: nvdiffrast"
 . ./setup.sh --nvdiffrast
 log "TRELLIS setup.sh: kaolin"
@@ -66,7 +73,7 @@ pip install trimesh xatlas pyvista pymeshfix open3d rembg onnxruntime igraph ima
 log "verify imports"
 python - <<'PY'
 import os
-os.environ.setdefault("ATTN_BACKEND","flash-attn"); os.environ.setdefault("SPCONV_ALGO","native")
+os.environ.setdefault("ATTN_BACKEND","xformers"); os.environ.setdefault("SPCONV_ALGO","native")
 import torch
 print("torch", torch.__version__, "cuda", torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else "-")
 from trellis.pipelines import TrellisImageTo3DPipeline
