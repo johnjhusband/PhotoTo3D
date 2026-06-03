@@ -15,10 +15,21 @@ apt-get install -y --no-install-recommends git build-essential ninja-build \
   libgl1 libglib2.0-0 libegl1 libgles2 ca-certificates wget unzip
 
 cd /workspace 2>/dev/null || cd /root
-log "clone TRELLIS (+submodules)"
+log "clone TRELLIS (shallow + retries, then submodules separately — avoids large-pack early-EOF)"
+git config --global http.postBuffer 524288000
+git config --global http.lowSpeedLimit 0
+git config --global http.lowSpeedTime 999999
 rm -rf TRELLIS
-git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git
+for attempt in 1 2 3 4 5; do
+  git clone --depth 1 https://github.com/microsoft/TRELLIS.git && break
+  log "clone attempt $attempt failed; retrying"; rm -rf TRELLIS; sleep 5
+done
+[ -d TRELLIS ] || { echo "FATAL: TRELLIS clone failed after retries"; exit 1; }
 cd TRELLIS
+for attempt in 1 2 3 4 5; do
+  git submodule update --init --recursive --depth 1 && break
+  log "submodule attempt $attempt failed; retrying"; sleep 5
+done
 
 log "pip baseline tooling"
 pip install --upgrade pip setuptools wheel
