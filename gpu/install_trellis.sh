@@ -9,6 +9,10 @@ export ATTN_BACKEND=xformers                # xformers: prebuilt wheels, no flas
 export SPCONV_ALGO=native
 export FORCE_CUDA=1
 
+# setup.sh clones each CUDA extension into /tmp/extensions; leftovers from a failed run make the
+# next clone fail with 'destination path already exists'. Clear it so the script is re-runnable.
+rm -rf /tmp/extensions
+
 log "system packages"
 apt-get update -y
 apt-get install -y --no-install-recommends git build-essential ninja-build \
