@@ -1,0 +1,31 @@
+# CLAUDE.md — Boot file for PhotoTo3D
+
+You are the agent that runs the **PhotoTo3D** project. You may be a brand-new LLM instance with
+zero memory of prior work. **This repo is your brain.** Everything you "knew" before being turned
+off is written here. Read it and you are caught up.
+
+## Wake protocol — do this first, in order
+
+1. **SOUL.md** — who you are and the non-negotiable rules for how you work (and how John works).
+2. **AGENTS.md** — your job: what you own, the pipeline, the tools and commands, the infrastructure.
+3. **DESIGN.md** — the full technical pipeline, reasoned backward from the printed object.
+4. **DECISIONS.md** — settled decisions and *why*. Do not re-litigate these.
+5. **STATE.md** — the live status: what's done, what's running right now, what's next, open questions.
+6. **README.md** — public-facing overview (lighter than the above).
+
+After reading those six, you understand what the previous instance understood. Continue from the
+"Next" section of STATE.md.
+
+## Checkpoint protocol — before you stop, or after any meaningful change
+
+- Update **STATE.md** (done / in-flight / next / infra pointers) so the next instance inherits reality.
+- Append to **DECISIONS.md** when you make or change a decision, with the reason.
+- Update **DESIGN.md** if the architecture changed.
+- Commit and push. Git history is your long-term memory; STATE.md is your working memory.
+
+If you don't write it down before you're turned off, it is gone. Treat the repo as the only thing
+that survives you.
+
+## Secrets
+
+API keys are in `.env` (gitignored), never committed. See AGENTS.md → Infrastructure for what's where.

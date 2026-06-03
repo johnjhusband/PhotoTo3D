@@ -65,16 +65,17 @@ the reference. *(John's hardware/hands.)*
 - **John's:** the physical print, and artistic hand-finishing where a human in the Blender viewport
   beats my script→render→look loop.
 
-## Open forks (these change the design — John decides, not me)
+## Resolved direction (John, 2026-06-03)
 
-1. **One-off vs. reusable tool.** Is the goal a single figurine of this one character, or a tool
-   where you drop in images + a printer profile and get a printable file repeatedly? This decides how
-   much we parameterize/harden vs. just produce the file once. *(Default assumption until told
-   otherwise: one-off figurine — no extra hardening.)*
-2. **Target printer + color intent.** Which printer, how many spools, and do we attempt color or go
-   monochrome-and-paint? This decides stages 4–6 entirely.
+1. **Reusable tool**, not a one-off. The system must take images **+ a printer profile** as inputs
+   and produce a printable file repeatedly. So everything is parameterized; nothing is hardcoded to
+   one character or one machine.
+2. **The printer is a parameter, not a fixed target.** Spool count N, build volume, loaded filament
+   colors, and color-vs-paint intent are inputs supplied per job/printer profile (the "4 spools"
+   case is just one value of N). Stage 4's palette-to-N is driven by that N. We do not assume a
+   specific printer.
 
 ## Status
 
-- Stage 2 (TRELLIS) installing on a rented RTX 3090. Stages 3–4 scripted (`pipeline/repair_mesh.py`,
-  palette stage TBD). Stages 0, 5, 6 depend on the printer answer in fork #2.
+See **STATE.md** for live status. (Architecture: stages 1–4 + slicing automatable by the agent;
+physical print + artistic finishing are John's.)
