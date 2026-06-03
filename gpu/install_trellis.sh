@@ -94,7 +94,7 @@ sed -i 's/xops\.fmha\.BlockDiagonalMask/xops.fmha.attn_bias.BlockDiagonalMask/g'
 
 # Mesh post-processing libs used by to_glb / our repair step
 log "mesh export deps"
-pip install trimesh xatlas pyvista pymeshfix open3d rembg onnxruntime igraph imageio imageio-ffmpeg
+pip install trimesh xatlas pyvista pymeshfix open3d rembg onnxruntime igraph imageio imageio-ffmpeg lxml fast_simplification
 
 log "verify imports"
 python - <<'PY'
