@@ -16,6 +16,8 @@ apt-get install -y --no-install-recommends git build-essential ninja-build \
 
 cd /workspace 2>/dev/null || cd /root
 log "clone TRELLIS (shallow + retries, then submodules separately — avoids large-pack early-EOF)"
+# Root cause of 'curl 92 HTTP/2 stream CANCEL / early EOF' on some hosts: HTTP/2 multiplexing.
+git config --global http.version HTTP/1.1
 git config --global http.postBuffer 524288000
 git config --global http.lowSpeedLimit 0
 git config --global http.lowSpeedTime 999999
