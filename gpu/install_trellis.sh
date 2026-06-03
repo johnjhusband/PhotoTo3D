@@ -79,6 +79,11 @@ log "mip-splatting diff-gaussian-rasterization (--no-build-isolation)"
 git clone https://github.com/autonomousvision/mip-splatting.git /tmp/extensions/mip-splatting
 pip install --no-build-isolation /tmp/extensions/mip-splatting/submodules/diff-gaussian-rasterization/
 
+# TRELLIS uses the transformers 4.x CLIP API (CLIPTextModel/CLIPVisionModel). setup.sh's basic deps
+# pull the latest transformers (5.x), where `from transformers import CLIPTextModel` breaks. Pin 4.x.
+log "pin transformers to 4.x (TRELLIS CLIP API compatibility)"
+pip install "transformers==4.46.3"
+
 # Mesh post-processing libs used by to_glb / our repair step
 log "mesh export deps"
 pip install trimesh xatlas pyvista pymeshfix open3d rembg onnxruntime igraph imageio imageio-ffmpeg
