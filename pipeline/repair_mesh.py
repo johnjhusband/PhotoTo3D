@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-"""repair_mesh.py — turn a raw photogrammetry mesh into a watertight, printable STL/3MF.
+"""repair_mesh.py — turn a raw generated/photogrammetry mesh into a watertight, printable STL/3MF.
 
-Photogrammetry output (OpenMVS .ply) is almost never print-ready: it has holes,
-non-manifold edges, floating islands, and isn't a closed solid. This step fixes that.
+Generative meshes (TRELLIS) and photogrammetry meshes are NOT print-ready: they're often made of
+many disconnected shells (hair, body, clothing as separate surfaces), with holes and self-intersections.
+Picking the "largest component" is wrong — it discards most of the figure. The robust fix for printing
+is to remesh ALL the occupied space into a single watertight solid (shrink-wrap), then clean it.
 
 Steps:
-  1. Load mesh (ply/obj).
-  2. Keep only the largest connected component (drop floating noise islands).
-  3. pymeshfix: remove self-intersections, fill holes -> watertight manifold.
-  4. Optional decimation to a target triangle count (printers don't need millions).
-  5. Report watertightness + write STL and 3MF.
+  1. Load mesh (glb/ply/obj/stl); flatten a scene to one mesh.
+  2. Voxel-remesh the whole thing -> one solid (fills interior, fuses all shells) -> watertight.
+  3. Keep the largest connected blob of the REMESHED solid (now meaningful: drops stray voxel specks).
+  4. Taubin smooth (removes voxel stair-stepping without shrinking).
+  5. pymeshfix final pass + decimate to a printable triangle budget.
+  6. Report watertightness; write STL + 3MF.
 
-Usage: repair_mesh.py <input_mesh> <out_basename> [target_tris]
-Run with: /opt/meshenv/bin/python repair_mesh.py ...
+Usage: repair_mesh.py <input_mesh> <out_basename> [voxel_div] [target_tris]
+  voxel_div  resolution = max_extent / voxel_div  (higher = finer; default 192)
+Run with the env python that has trimesh+pymeshfix (e.g. /opt/conda/bin/python).
 """
 import sys
 import numpy as np
@@ -22,49 +26,57 @@ import pymeshfix
 
 def main():
     if len(sys.argv) < 3:
-        sys.exit("usage: repair_mesh.py <input_mesh> <out_basename> [target_tris]")
+        sys.exit("usage: repair_mesh.py <input_mesh> <out_basename> [voxel_div] [target_tris]")
     inp, base = sys.argv[1], sys.argv[2]
-    target = int(sys.argv[3]) if len(sys.argv) > 3 else 300_000
+    voxel_div = float(sys.argv[3]) if len(sys.argv) > 3 else 192.0
+    target = int(sys.argv[4]) if len(sys.argv) > 4 else 200_000
 
     print(f"[repair] loading {inp}")
-    m = trimesh.load(inp, process=True)
+    m = trimesh.load(inp, process=True, force='mesh')
     if isinstance(m, trimesh.Scene):
         m = trimesh.util.concatenate([g for g in m.geometry.values()])
-    print(f"[repair] loaded: {len(m.vertices)} verts, {len(m.faces)} faces")
+    print(f"[repair] loaded: {len(m.vertices)} verts, {len(m.faces)} faces, "
+          f"{len(m.split(only_watertight=False))} components")
 
-    # 1. drop floating islands — keep the biggest body
-    parts = m.split(only_watertight=False)
+    # 1. voxel remesh -> single solid that encloses ALL shells
+    pitch = float(m.extents.max()) / voxel_div
+    print(f"[repair] voxelizing at pitch={pitch:.5f} (~{voxel_div:.0f} per axis) and filling interior")
+    vg = m.voxelized(pitch=pitch).fill()
+    solid = vg.marching_cubes
+    solid = trimesh.Trimesh(vertices=np.asarray(solid.vertices), faces=np.asarray(solid.faces),
+                            process=True)
+    print(f"[repair] remeshed solid: {len(solid.vertices)} verts, {len(solid.faces)} faces")
+
+    # 2. keep largest blob (drops disconnected voxel specks); now the figure is one body
+    parts = solid.split(only_watertight=False)
     if len(parts) > 1:
-        m = max(parts, key=lambda p: len(p.faces))
-        print(f"[repair] kept largest of {len(parts)} components: {len(m.faces)} faces")
+        solid = max(parts, key=lambda p: len(p.faces))
+        print(f"[repair] kept largest of {len(parts)} remeshed blobs: {len(solid.faces)} faces")
 
-    # 2. watertight repair (hole fill + self-intersection removal)
-    print("[repair] pymeshfix: filling holes, fixing manifold...")
-    verts = np.asarray(m.vertices, dtype=np.float64)
-    faces = np.asarray(m.faces, dtype=np.int32)
+    # 3. smooth away voxel stair-stepping (Taubin doesn't shrink like Laplacian)
+    trimesh.smoothing.filter_taubin(solid, iterations=12)
+
+    # 4. final watertight guarantee via pymeshfix
+    verts = np.asarray(solid.vertices, dtype=np.float64)
+    faces = np.asarray(solid.faces, dtype=np.int32)
     vclean, fclean = pymeshfix.clean_from_arrays(verts, faces)
-    m = trimesh.Trimesh(vertices=vclean, faces=fclean, process=True)
-    print(f"[repair] after fix: {len(m.vertices)} verts, {len(m.faces)} faces, "
-          f"watertight={m.is_watertight}")
+    solid = trimesh.Trimesh(vertices=vclean, faces=fclean, process=True)
 
-    # 3. decimate if huge (keeps print slicers happy)
-    if len(m.faces) > target:
-        print(f"[repair] decimating {len(m.faces)} -> ~{target} faces")
-        m = m.simplify_quadric_decimation(face_count=target)
-        m = trimesh.Trimesh(vertices=m.vertices, faces=m.faces, process=True)
-
-    # 4. fix normals/winding for printing
-    m.fix_normals()
+    # 5. decimate to a printable budget
+    if len(solid.faces) > target:
+        print(f"[repair] decimating {len(solid.faces)} -> ~{target} faces")
+        solid = solid.simplify_quadric_decimation(face_count=target)
+        solid = trimesh.Trimesh(vertices=solid.vertices, faces=solid.faces, process=True)
+    solid.fix_normals()
 
     stl, tmf = f"{base}.stl", f"{base}.3mf"
-    m.export(stl)
-    m.export(tmf)
+    solid.export(stl)
+    solid.export(tmf)
     print(f"[repair] wrote {stl} and {tmf}")
-    print(f"[repair] FINAL watertight={m.is_watertight} "
-          f"volume={'n/a' if not m.is_watertight else round(m.volume,2)} "
-          f"faces={len(m.faces)}")
-    if not m.is_watertight:
-        print("[repair] WARNING: mesh not fully watertight — may need manual touch-up in Blender")
+    print(f"[repair] FINAL watertight={solid.is_watertight} faces={len(solid.faces)} "
+          f"volume={round(solid.volume,4) if solid.is_watertight else 'n/a'}")
+    if not solid.is_watertight:
+        print("[repair] WARNING: not fully watertight — raise voxel_div or touch up in Blender")
 
 
 if __name__ == "__main__":
