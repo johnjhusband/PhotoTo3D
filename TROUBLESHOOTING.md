@@ -41,6 +41,17 @@ check here first.
 - **Billing:** "stop" still bills storage every second; only **delete** stops all charges. Reuse via
   `docker commit` → push to a registry → recreate from the image (zero idle cost).
 
+## A vast host that simply can't download a model
+
+- Instance 39215079 downloaded TRELLIS weights fine but **could not download SDXL** (~7GB) at all —
+  main HF CDN failed 20× over ~100 min, hf-mirror.com failed 8× more, with hf_transfer + shell
+  `timeout` + retries all in place. Conclusion: some host↔CDN paths are just broken for large files
+  and no client-side fix helps. Fallbacks: (1) download the model on a machine with good network and
+  rsync the HF cache to the box; (2) destroy and rent a different instance. Don't burn hours retrying.
+- Note: Step-A consolidation only matters when no single input image is good enough. If one reference
+  clearly wins (it did for John's set), single-image TRELLIS already gives the best result — the SDXL
+  consolidation is optional, so a download blocker on it is not a hard stop for the project.
+
 ## Long-running jobs (downloads, watchers)
 
 - **Hugging Face model downloads stall on these hosts** (SDXL/TRELLIS weights hang mid-fetch, leaving

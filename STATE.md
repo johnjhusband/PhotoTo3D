@@ -55,10 +55,17 @@ is **stall-aware** (log-mtime + markers + process). End-of-turn Stop hook for re
   (`pal_part{0-3}_<hex>.stl`). Sent John. Finding: 4 colors all dark (source texture is dark/low
   contrast) → effectively hair-vs-body. Lever: supply explicit filament colors + region mapping.
 
+## BLOCKED: Step A consolidation on this box
+
+SDXL download is impossible on instance 39215079 (HF main 20× + hf-mirror 8× all failed, ~2h GPU
+wasted). Consolidation cannot run here. **Awaiting John's call (2026-06-03):** wrap up (docker-commit
++ destroy box, single-image + 4-color are the deliverables) vs. push SDXL from laptop via rsync.
+Single-image path is unaffected and is the working deliverable.
+
 ## Next
 
-1. When Step A finishes: pull `out_consol/{canonical.png,model.*}`, render with F3D, send John the
-   consolidation comparison (canonical image + resulting figurine vs single-image baseline).
+1. Per John's decision: either docker-commit + destroy box, OR rsync SDXL laptop→box then run Step A.
+2. When/if Step A runs: pull `out_consol/{canonical.png,model.*}`, render with F3D, send comparison.
 2. If John wants vivid color: add explicit-target-filament-color mapping to `palette_quantize.py`.
 3. GPU box still billing — offer docker-commit + destroy when John is done reviewing.
 2. **Decide with John: keep generating / iterate, or wrap up.** If wrapping: `docker commit` the box
