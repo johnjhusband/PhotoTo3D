@@ -19,7 +19,17 @@ filament colors, color-vs-paint) is a parameter. Current input type: concept art
 - Reference image chosen: `candidates/gXAmE1Bn2dubu5B-OCEe4.png` (umbrella illustration); runner
   updated for multi-image.
 
-## In flight
+## DONE — first figurine generated (2026-06-03)
+
+- TRELLIS install fully working on instance 39215079 (xformers backend, all CUDA extensions built).
+- Single-image generation succeeded from the umbrella ref → `out_single/{model.glb,model.stl,
+  preview.mp4,turntable_montage.png}`. Recognizable character (hair/scarf/pose), umbrella excluded.
+  Sent to John. STL pulled to laptop at `out_single/`.
+- Final install fixes beyond the clone/open3d/build-isolation ones: transformers pinned 4.46.3;
+  TRELLIS sparse-attn patched for xformers 0.0.28 BlockDiagonalMask path; lxml installed for 3MF;
+  run via `PYTHONPATH=/workspace/TRELLIS` (script adds TRELLIS_HOME to sys.path now).
+
+## In flight / Next-now
 
 - **TRELLIS install running** on instance 39215079. Clone + basic deps + open3d pre-pin all pass;
   now building the CUDA extensions (spconv/nvdiffrast/kaolin/diffoctreerast/mipgaussian).
