@@ -40,7 +40,9 @@ def main():
 
     # 2. watertight repair (hole fill + self-intersection removal)
     print("[repair] pymeshfix: filling holes, fixing manifold...")
-    vclean, fclean = pymeshfix.clean_from_arrays(m.vertices, m.faces)
+    verts = np.asarray(m.vertices, dtype=np.float64)
+    faces = np.asarray(m.faces, dtype=np.int32)
+    vclean, fclean = pymeshfix.clean_from_arrays(verts, faces)
     m = trimesh.Trimesh(vertices=vclean, faces=fclean, process=True)
     print(f"[repair] after fix: {len(m.vertices)} verts, {len(m.faces)} faces, "
           f"watertight={m.is_watertight}")
