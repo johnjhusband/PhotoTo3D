@@ -60,8 +60,10 @@ def main():
     pipe = TrellisImageTo3DPipeline.from_pretrained("JeffreyXiang/TRELLIS-image-large")
     pipe.cuda()
 
-    ss = {"steps": 12, "cfg_strength": 7.5}
-    slat = {"steps": 12, "cfg_strength": 3.0}
+    # quality settings (override via env STEPS / TEX). Higher steps = crisper geometry/texture.
+    steps = int(os.environ.get("STEPS", "30"))
+    ss = {"steps": steps, "cfg_strength": 7.5}
+    slat = {"steps": steps, "cfg_strength": 3.0}
 
     if len(images) == 1:
         print(f"[trellis] single-image run (seed={seed})")
@@ -85,8 +87,9 @@ def main():
         print(f"[trellis] preview render skipped: {e}")
 
     print("[trellis] exporting textured GLB")
+    tex = int(os.environ.get("TEX", "2048"))      # higher texture res = crisper color detail
     glb = postprocessing_utils.to_glb(outputs["gaussian"][0], outputs["mesh"][0],
-                                      simplify=0.95, texture_size=1024)
+                                      simplify=0.9, texture_size=tex)
     glb_path = os.path.join(outdir, "model.glb")
     glb.export(glb_path)
 

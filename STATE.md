@@ -55,6 +55,15 @@ is **stall-aware** (log-mtime + markers + process). End-of-turn Stop hook for re
   (`pal_part{0-3}_<hex>.stl`). Sent John. Finding: 4 colors all dark (source texture is dark/low
   contrast) → effectively hair-vs-body. Lever: supply explicit filament colors + region mapping.
 
+## QUALITY: outputs not yet acceptable (John, 2026-06-03)
+
+John: "None of the output is acceptable quality yet." Two ceilings: (1) input image quality — the
+umbrella ref is upper-body, dark, cluttered (umbrella prop), so TRELLIS gives a dark bust with an
+invented blobby back; (2) I ran fast/low settings (12 steps, 1024 texture, voxel_div 192). Plan:
+high-quality re-run on a CLEANED input (crop umbrella, boost contrast, rembg) at 30 steps + 2048
+texture (run_trellis now reads STEPS/TEX env) + finer repair (raise voxel_div). Input is the hard
+ceiling — a clean full-body reference would help most. Spend so far: **$3.95** of $25 vast credit.
+
 ## BLOCKED: Step A consolidation on this box
 
 SDXL download is impossible on instance 39215079 (HF main 20× + hf-mirror 8× all failed, ~2h GPU
