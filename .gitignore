@@ -19,6 +19,8 @@ work/
 out_single/
 out_multi/
 out_consol/
+out_hq/
+_hfcache/
 *.stl
 *.3mf
 *.glb

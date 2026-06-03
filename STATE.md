@@ -55,6 +55,19 @@ is **stall-aware** (log-mtime + markers + process). End-of-turn Stop hook for re
   (`pal_part{0-3}_<hex>.stl`). Sent John. Finding: 4 colors all dark (source texture is dark/low
   contrast) → effectively hair-vs-body. Lever: supply explicit filament colors + region mapping.
 
+## HQ re-run done (2026-06-03) — improved but still a bust
+
+High-quality re-run (STEPS=30, TEX=2048, enhanced/autocontrast reference, repair voxel_div=256) →
+`out_hq/{model.glb, printable.stl, printable_color.glb}`. Clearly better than first pass: cleaner
+geometry, brighter scarf, readable sweater/bandages/face, less muddy. Sent John. STILL a BUST (upper
+body) because the reference is upper-body — input is the hard ceiling. **Lever for a full figurine:**
+the SDXL consolidation prompt asks for "full figure head to feet", so SDXL can GENERATE a full-body
+canonical reference from the upper-body art — this is why the SDXL download matters for quality, not
+just multi-image.
+
+Laptop SDXL download (to bypass the box's broken HF path) stalled at 4.1GB; restarted robustly
+(`_hfcache/robust_dl.sh`, timeout+retry). When done → rsync `_hfcache` to box → run consolidation.
+
 ## QUALITY: outputs not yet acceptable (John, 2026-06-03)
 
 John: "None of the output is acceptable quality yet." Two ceilings: (1) input image quality — the

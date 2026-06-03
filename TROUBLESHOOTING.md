@@ -54,10 +54,12 @@ check here first.
 
 ## Long-running jobs (downloads, watchers)
 
-- **Hugging Face model downloads stall on these hosts** (SDXL/TRELLIS weights hang mid-fetch, leaving
-  `*.incomplete` in `~/.cache/huggingface`). Fix: set `HF_HUB_DOWNLOAD_TIMEOUT=30` and wrap
-  `snapshot_download(...)` (resumes by default) in a retry loop so a stall fails fast and retries.
-  Pre-download weights before the generation step rather than letting it fetch mid-run.
+- **Hugging Face model downloads stall** — SDXL hangs mid-fetch (leaves `*.incomplete`), both on the
+  vast box AND on the laptop (unauthenticated rate limits don't help). The ONLY reliable fix is a
+  **shell `timeout` wrapper + retry loop** around `snapshot_download` (resumes from partial): a stall
+  gets killed and retried. `HF_HUB_ENABLE_HF_TRANSFER` is **deprecated/ignored** in huggingface_hub
+  1.x — it's replaced by Xet (`HF_XET_HIGH_PERFORMANCE=1`). So don't rely on hf_transfer; rely on the
+  timeout+retry. An HF_TOKEN would raise rate limits but we don't have one.
 - **A process-presence watcher (`pgrep`) CANNOT detect a hang** — a frozen process is still "alive",
   so the watcher waits forever. Watch the **log mtime** instead: declare a stall if the log hasn't
   changed in N minutes (~7), in addition to success/error markers and process-gone. A bash launcher
