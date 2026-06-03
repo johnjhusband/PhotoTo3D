@@ -39,6 +39,12 @@ pip install ninja
 
 # TRELLIS ships setup.sh that installs each heavy dep with the right wheel/build.
 # Install into the base env (no --new-env). Order chosen so CUDA extensions build last.
+
+# Pre-pin open3d so setup.sh's large 'basic' resolve doesn't backtrack between open3d
+# 0.18/0.19 (different werkzeug pins) and bail with ResolutionImpossible.
+log "pre-install open3d (pinned) to avoid resolver conflict in basic deps"
+pip install "open3d==0.19.0" "werkzeug>=3.0.0"
+
 log "TRELLIS setup.sh: basic deps"
 . ./setup.sh --basic
 log "TRELLIS setup.sh: flash-attn"
