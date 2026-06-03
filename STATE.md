@@ -55,6 +55,17 @@ is **stall-aware** (log-mtime + markers + process). End-of-turn Stop hook for re
   (`pal_part{0-3}_<hex>.stl`). Sent John. Finding: 4 colors all dark (source texture is dark/low
   contrast) → effectively hair-vs-body. Lever: supply explicit filament colors + region mapping.
 
+## Consolidation pipeline WORKS (2026-06-03)
+
+SDXL+IP-Adapter consolidation runs end-to-end on the box from a LOCAL copy of SDXL (11GB, curl-streamed
+on laptop → rsync to /workspace/_sdxl; no HF on the box). Fixes that got it working: `ip_adapter_image=[refs]`
+(single adapter, multi-image), local SDXL_PATH/IPA_PATH, HF_HUB_OFFLINE=1. Output `out_consol/`:
+`canonical.png` (clean fused character — cleaner than any single input) + figurine (cleanest BUST yet).
+STILL a portrait/bust, not full-body: IP-Adapter scale 0.7 followed the portrait references over the
+"full figure head to feet" prompt. **Next lever:** lower IP-Adapter `--scale` (~0.4) so the prompt's
+full-body framing dominates (trades some character fidelity). Iterate the canonical (SDXL-only, ~30s,
+cheap) BEFORE running TRELLIS.
+
 ## HQ re-run done (2026-06-03) — improved but still a bust
 
 High-quality re-run (STEPS=30, TEX=2048, enhanced/autocontrast reference, repair voxel_div=256) →
