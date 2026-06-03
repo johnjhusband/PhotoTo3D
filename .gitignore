@@ -9,6 +9,7 @@ __pycache__/
 
 # model / HuggingFace cache (multi-GB downloads, never source)
 _hfcache/
+_sdxl/
 
 # inputs / experiment data (user images, not for the repo)
 samples/
@@ -21,6 +22,7 @@ out_multi/
 out_consol/
 out_hq/
 _hfcache/
+_sdxl/
 *.stl
 *.3mf
 *.glb
