@@ -7,6 +7,9 @@
 __pycache__/
 *.pyc
 
+# model / HuggingFace cache (multi-GB downloads, never source)
+_hfcache/
+
 # inputs / experiment data (user images, not for the repo)
 samples/
 candidates/
