@@ -43,12 +43,14 @@ def main():
     print(f"[consolidate] {len(refs)} reference images -> 1 canonical")
     print(f"[consolidate] prompt: {a.prompt}")
 
+    # SDXL_PATH / IPA_PATH let us load from a local copy (avoids HF downloads on the box).
+    sdxl = os.environ.get("SDXL_PATH", "stabilityai/stable-diffusion-xl-base-1.0")
+    ipa = os.environ.get("IPA_PATH", "h94/IP-Adapter")
     pipe = StableDiffusionXLPipeline.from_pretrained(
-        "stabilityai/stable-diffusion-xl-base-1.0", torch_dtype=torch.float16, variant="fp16",
+        sdxl, torch_dtype=torch.float16, variant="fp16",
     ).to("cuda")
     pipe.scheduler = DDIMScheduler.from_config(pipe.scheduler.config)
-    pipe.load_ip_adapter("h94/IP-Adapter", subfolder="sdxl_models",
-                         weight_name="ip-adapter_sdxl.bin")
+    pipe.load_ip_adapter(ipa, subfolder="sdxl_models", weight_name="ip-adapter_sdxl.bin")
     pipe.set_ip_adapter_scale(a.scale)
 
     g = torch.Generator(device="cuda").manual_seed(a.seed)
