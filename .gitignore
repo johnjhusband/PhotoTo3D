@@ -11,10 +11,15 @@ __pycache__/
 samples/
 candidates/
 
-# outputs / scratch
+# outputs / scratch (generated artifacts, not source — keep them out of git)
 work/
+out_single/
+out_multi/
+out_consol/
 *.stl
 *.3mf
 *.glb
 *.ply
+*.png
+*.mp4
 *.log
