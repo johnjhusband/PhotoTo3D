@@ -57,7 +57,8 @@ def main():
     # Pass all refs together: IP-Adapter combines their image embeddings -> features of each fused.
     image = pipe(
         prompt=a.prompt, negative_prompt=a.neg,
-        ip_adapter_image=refs,
+        # one IP-Adapter conditioned on ALL refs -> wrap as a single adapter's image set
+        ip_adapter_image=[refs],
         num_inference_steps=a.steps, guidance_scale=6.0, generator=g,
         height=1024, width=1024,
     ).images[0]
