@@ -21,7 +21,11 @@ filament colors, color-vs-paint) is a parameter. Current input type: concept art
 
 ## In flight
 
-- **TRELLIS install running** on instance 39215079, past the clone, in the pip/CUDA-build phase.
+- **TRELLIS install running** on instance 39215079. Clone + basic deps + open3d pre-pin all pass;
+  now building the CUDA extensions (spconv/nvdiffrast/kaolin/diffoctreerast/mipgaussian).
+- **flash-attn dropped for xformers.** flash-attn failed (build-isolation `No module named torch`,
+  plus slow/OOM source build). Switched `ATTN_BACKEND=xformers` + prebuilt `xformers==0.0.28.post1`
+  (cu121 wheel) in both install + run scripts. xformers is TRELLIS's supported alternative backend.
 - **Clone failure resolved.** Root cause was `curl 92 HTTP/2 stream CANCEL / early EOF` — fixed by
   `git config --global http.version HTTP/1.1` (now in `install_trellis.sh`) plus shallow clone +
   retries + separate submodule init.
