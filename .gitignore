@@ -1,0 +1,20 @@
+# secrets
+.env
+*.key
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# inputs / experiment data (user images, not for the repo)
+samples/
+candidates/
+
+# outputs / scratch
+work/
+*.stl
+*.3mf
+*.glb
+*.ply
+*.log
