@@ -31,9 +31,21 @@ filament colors, color-vs-paint) is a parameter. Current input type: concept art
   decimate → pymeshfix): `out_single/printable.{stl,3mf}`, 199,908 faces, watertight=True. Pulled to
   laptop.
 
+## Added this cycle (2026-06-03)
+
+- **F3D** installed on the laptop (apt) — mesh viewer + headless renderer. Render flags in TROUBLESHOOTING.
+- **Color requirement** ("we need color"): `repair_mesh.py` now transfers GLB texture color onto the
+  watertight solid → `*_color.glb`/`*_color.ply` (needs a fresh repair run on the box to produce them;
+  the existing `out_single/printable.*` predate the color edit). Sent John lit color renders of model.glb.
+- **Step A consolidation** built (`consolidate.py` SDXL+IP-Adapter, `run_pipeline.sh`, `install_consolidate.sh`)
+  and RUNNING on the box over the 6 candidates with an LLM-written character prompt → `out_consol/`
+  (currently downloading SDXL). Will produce `canonical.png` + a 3D model to compare vs single/multi.
+
 ## Next
 
-1. Send John the single-vs-multi comparison + the watertight `printable.stl` (in progress).
+1. When Step A finishes: pull `out_consol/{canonical.png,model.*}`, render with F3D, send John the
+   consolidation comparison (canonical image + resulting figurine vs single-image baseline).
+2. Re-run `repair_mesh.py` to produce the colored watertight outputs (`*_color.glb/.ply`).
 2. **Decide with John: keep generating / iterate, or wrap up.** If wrapping: `docker commit` the box
    → push image to a registry (GHCR under johnjhusband) → `vastai destroy instance 39215079` to stop
    billing. Reuse later from the image.

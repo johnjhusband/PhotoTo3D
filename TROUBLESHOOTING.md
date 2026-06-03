@@ -49,5 +49,18 @@ check here first.
 - **Decimation re-opens the surface** → not watertight. Fix: decimate FIRST, run pymeshfix LAST.
 - **`pymeshfix.clean_from_arrays` rejects trimesh arrays.** Cast: `np.asarray(v, float64)`,
   `np.asarray(f, int32)`.
-- **Headless mesh rendering** (trimesh `save_image`) needs pyglet/a display — not installed. To preview
-  geometry, use TRELLIS's own turntable `preview.mp4`, or install a render stack if truly needed.
+- **Headless mesh rendering** (trimesh `save_image`) needs pyglet — not installed. Use **F3D** instead
+  (installed locally via apt): it views AND renders STL/GLB/3MF/PLY/OBJ.
+
+## Viewing / rendering with F3D (installed on the laptop)
+
+- View interactively: `f3d <file>` (drag to rotate). Handles STL, GLB, 3MF, OBJ, PLY.
+- Headless render to PNG: `f3d model.glb --output x.png --resolution 800,800 --camera-azimuth-angle <deg> --camera-elevation-angle <deg>`.
+- **Background flag is `--bg-color R,G,B`** (space-separated), NOT `--background-color=` (that errors and
+  the render silently produces nothing). Default bg is dark `0.2,0.2,0.2`.
+- **Dark-colored models render near-black.** Use `--light-intensity 4-6` and a light-ish `--bg-color
+  0.62,0.66,0.72` for contrast. Don't fix it with ImageMagick `-auto-level` — on dark-on-dark it blows
+  the image out to white.
+- **STL is geometry only (renders grey) — color lives in the GLB.** For a colored printable, repair_mesh
+  transfers the GLB's texture color onto the watertight solid and writes `*_color.glb` / `*_color.ply`.
+- Front of the umbrella-character model is azimuth ~0; azimuth 180 is the dark hair back.

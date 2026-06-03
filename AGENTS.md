@@ -38,9 +38,14 @@ Stages 1–4 of DESIGN.md plus slicing-to-G-code:
   list → `vastai show instances`; kill → `vastai destroy instance <id>`.
 - **GPU box install** — `gpu/install_trellis.sh` (TRELLIS + CUDA deps on a pytorch-cuda-devel image).
   Known pitfalls and their fixes are documented in **TROUBLESHOOTING.md** — read it before debugging.
-- **GPU box run** — from `/workspace/TRELLIS`:
-  `PYTHONPATH=/workspace/TRELLIS ATTN_BACKEND=xformers SPCONV_ALGO=native python /workspace/run_trellis.py <out_dir> <img...>`
-  (multi-image auto when >1, but single best image gives better results on mixed-style sets).
+- **GPU box run (full path)** — `gpu/run_pipeline.sh <out_dir> <img...> [--prompt "..."]`: 1 image →
+  TRELLIS single-image; 2+ images → Step A consolidation (`consolidate.py`, SDXL+IP-Adapter) → one
+  canonical image → TRELLIS single-image. Needs `install_consolidate.sh` deps for the 2+ path.
+- **TRELLIS only** — `PYTHONPATH=/workspace/TRELLIS ATTN_BACKEND=xformers SPCONV_ALGO=native python /workspace/run_trellis.py <out_dir> <img>`.
+- **View/render meshes** — **F3D** (installed locally): `f3d <file>` to view; headless render with
+  `--output x.png --bg-color R,G,B --light-intensity 4-6 --camera-azimuth-angle <deg>`. See TROUBLESHOOTING.
+- **Color** — `repair_mesh.py` transfers texture color onto the watertight solid → `*_color.glb`/`.ply`
+  (STL/3MF stay geometry). The GLB from TRELLIS is the textured source of truth.
 - **CPU photogrammetry** — `pipeline/run.sh <images_dir> <work_dir>` (dormant).
 - **Hetzner** (CPU infra, if revived) — `deploy/provision-? `, `deploy/park.sh` / `deploy/wake.sh`.
 

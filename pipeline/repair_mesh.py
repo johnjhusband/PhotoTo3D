@@ -38,6 +38,18 @@ def main():
     print(f"[repair] loaded: {len(m.vertices)} verts, {len(m.faces)} faces, "
           f"{len(m.split(only_watertight=False))} components")
 
+    # Capture original color (from texture or vertex colors) BEFORE remeshing, so we can transfer
+    # it back onto the watertight solid afterward — the voxel remesh itself is geometry-only.
+    src_pts = np.asarray(m.vertices)
+    src_colors = None
+    try:
+        src_colors = np.asarray(m.visual.to_color().vertex_colors)
+        if src_colors.shape[0] != src_pts.shape[0]:
+            src_colors = None
+    except Exception as e:
+        print(f"[repair] no source color ({e})")
+    print(f"[repair] source has color: {src_colors is not None}")
+
     # 1. voxel remesh -> single solid that encloses ALL shells
     pitch = float(m.extents.max()) / voxel_div
     print(f"[repair] voxelizing at pitch={pitch:.5f} (~{voxel_div:.0f} per axis) and filling interior")
@@ -69,10 +81,24 @@ def main():
     solid = trimesh.Trimesh(vertices=vclean, faces=fclean, process=True)
     solid.fix_normals()
 
+    # Transfer original color onto the watertight solid (nearest source point per vertex).
+    colored = False
+    if src_colors is not None:
+        from scipy.spatial import cKDTree
+        _, idx = cKDTree(src_pts).query(np.asarray(solid.vertices))
+        solid.visual.vertex_colors = src_colors[idx]
+        colored = True
+        print("[repair] transferred color onto watertight solid")
+
     stl, tmf = f"{base}.stl", f"{base}.3mf"
-    solid.export(stl)
+    solid.export(stl)   # geometry only (single-color printing / painting base)
     solid.export(tmf)
     print(f"[repair] wrote {stl} and {tmf}")
+    if colored:
+        # color-carrying formats (vertex colors): GLB + PLY for viewing / color workflows
+        solid.export(f"{base}_color.glb")
+        solid.export(f"{base}_color.ply")
+        print(f"[repair] wrote {base}_color.glb and {base}_color.ply (with color)")
     print(f"[repair] FINAL watertight={solid.is_watertight} faces={len(solid.faces)} "
           f"volume={round(solid.volume,4) if solid.is_watertight else 'n/a'}")
     if not solid.is_watertight:
