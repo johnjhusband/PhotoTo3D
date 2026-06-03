@@ -48,11 +48,19 @@ process-presence watcher couldn't detect it). Restarted via `launch_consol2.sh`:
 IP-Adapter with resume + retry loop + `HF_HUB_DOWNLOAD_TIMEOUT=30`, then runs the pipeline. New watcher
 is **stall-aware** (log-mtime + markers + process). End-of-turn Stop hook for repo sync is now live.
 
+## Done since (2026-06-03, color)
+
+- Color-transfer repair RUN: `out_single/printable_color.{glb,ply}` (watertight + color, 199,908 faces).
+- **Stage 4 palette-to-N RUN** at N=4 → `out_single/pal_4color.{glb,ply}` + 4 per-color STLs
+  (`pal_part{0-3}_<hex>.stl`). Sent John. Finding: 4 colors all dark (source texture is dark/low
+  contrast) → effectively hair-vs-body. Lever: supply explicit filament colors + region mapping.
+
 ## Next
 
 1. When Step A finishes: pull `out_consol/{canonical.png,model.*}`, render with F3D, send John the
    consolidation comparison (canonical image + resulting figurine vs single-image baseline).
-2. Re-run `repair_mesh.py` to produce the colored watertight outputs (`*_color.glb/.ply`).
+2. If John wants vivid color: add explicit-target-filament-color mapping to `palette_quantize.py`.
+3. GPU box still billing — offer docker-commit + destroy when John is done reviewing.
 2. **Decide with John: keep generating / iterate, or wrap up.** If wrapping: `docker commit` the box
    → push image to a registry (GHCR under johnjhusband) → `vastai destroy instance 39215079` to stop
    billing. Reuse later from the image.
