@@ -19,12 +19,17 @@ filament colors, color-vs-paint) is a parameter. Current input type: concept art
 - Reference image chosen: `candidates/gXAmE1Bn2dubu5B-OCEe4.png` (umbrella illustration); runner
   updated for multi-image.
 
-## In flight / BROKEN
+## In flight
 
-- **TRELLIS install on the GPU box FAILED at the git clone** — `gpu/install_trellis.sh` died with
-  `fatal: early EOF` / `invalid index-pack output` while doing `git clone --recurse-submodules`.
-  The large submodule pack choked. **Needs a more robust clone** (e.g. clone shallow without
-  submodules, then `git submodule update --init --depth 1`, with retries).
+- **TRELLIS install running** on instance 39215079, past the clone, in the pip/CUDA-build phase.
+- **Clone failure resolved.** Root cause was `curl 92 HTTP/2 stream CANCEL / early EOF` — fixed by
+  `git config --global http.version HTTP/1.1` (now in `install_trellis.sh`) plus shallow clone +
+  retries + separate submodule init.
+- **SSH gotchas (important for any future instance):**
+  - The vast **proxy** endpoint `ssh9.vast.ai:15078` is flaky for sustained sessions. Use the
+    **direct** endpoint instead: `ssh -i ~/.ssh/cto-deploy -p 29698 root@120.238.149.205` (stable).
+  - **Never `pkill -f install_trellis`** plainly — the pattern matches the SSH command's own shell and
+    kills the session (silent no-output). Use the bracket trick: `pkill -9 -f '[i]nstall_trellis'`.
 
 ## Next
 
