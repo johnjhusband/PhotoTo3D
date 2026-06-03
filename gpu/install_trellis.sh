@@ -84,6 +84,14 @@ pip install --no-build-isolation /tmp/extensions/mip-splatting/submodules/diff-g
 log "pin transformers to 4.x (TRELLIS CLIP API compatibility)"
 pip install "transformers==4.46.3"
 
+# xformers 0.0.28 moved BlockDiagonalMask to xformers.ops.fmha.attn_bias; TRELLIS calls it at
+# xops.fmha.BlockDiagonalMask. Patch TRELLIS's sparse-attention modules to the new path.
+log "patch TRELLIS for xformers 0.0.28 BlockDiagonalMask location"
+sed -i 's/xops\.fmha\.BlockDiagonalMask/xops.fmha.attn_bias.BlockDiagonalMask/g' \
+  trellis/modules/sparse/attention/full_attn.py \
+  trellis/modules/sparse/attention/serialized_attn.py \
+  trellis/modules/sparse/attention/windowed_attn.py
+
 # Mesh post-processing libs used by to_glb / our repair step
 log "mesh export deps"
 pip install trimesh xatlas pyvista pymeshfix open3d rembg onnxruntime igraph imageio imageio-ffmpeg
