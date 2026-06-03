@@ -41,6 +41,14 @@ check here first.
 - **Billing:** "stop" still bills storage every second; only **delete** stops all charges. Reuse via
   `docker commit` → push to a registry → recreate from the image (zero idle cost).
 
+## Don't download big models on the laptop with the Python/Xet path
+
+John's laptop has only **7.6 GB RAM**. `snapshot_download` of SDXL buffered ~3.2 GB in memory and
+pushed the machine into swap — visibly sluggish. The high-performance (Xet) transfer is memory-hungry.
+If a large model MUST be fetched on the laptop, stream each file to disk with `curl`/`wget` (near-zero
+RAM) instead, then rsync to the box. Better: avoid needing SDXL at all — a full-body reference image
+runs through the working TRELLIS path directly (no SDXL, no download fight).
+
 ## A vast host that simply can't download a model
 
 - Instance 39215079 downloaded TRELLIS weights fine but **could not download SDXL** (~7GB) at all —
