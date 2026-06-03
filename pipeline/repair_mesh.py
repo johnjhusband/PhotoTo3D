@@ -56,17 +56,17 @@ def main():
     # 3. smooth away voxel stair-stepping (Taubin doesn't shrink like Laplacian)
     trimesh.smoothing.filter_taubin(solid, iterations=12)
 
-    # 4. final watertight guarantee via pymeshfix
-    verts = np.asarray(solid.vertices, dtype=np.float64)
-    faces = np.asarray(solid.faces, dtype=np.int32)
-    vclean, fclean = pymeshfix.clean_from_arrays(verts, faces)
-    solid = trimesh.Trimesh(vertices=vclean, faces=fclean, process=True)
-
-    # 5. decimate to a printable budget
+    # 4. decimate to a printable budget FIRST (decimation can open the surface)
     if len(solid.faces) > target:
         print(f"[repair] decimating {len(solid.faces)} -> ~{target} faces")
         solid = solid.simplify_quadric_decimation(face_count=target)
         solid = trimesh.Trimesh(vertices=solid.vertices, faces=solid.faces, process=True)
+
+    # 5. final watertight guarantee via pymeshfix (LAST, so decimation can't re-open it)
+    verts = np.asarray(solid.vertices, dtype=np.float64)
+    faces = np.asarray(solid.faces, dtype=np.int32)
+    vclean, fclean = pymeshfix.clean_from_arrays(verts, faces)
+    solid = trimesh.Trimesh(vertices=vclean, faces=fclean, process=True)
     solid.fix_normals()
 
     stl, tmf = f"{base}.stl", f"{base}.3mf"
