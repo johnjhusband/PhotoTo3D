@@ -41,6 +41,17 @@ check here first.
 - **Billing:** "stop" still bills storage every second; only **delete** stops all charges. Reuse via
   `docker commit` → push to a registry → recreate from the image (zero idle cost).
 
+## Long-running jobs (downloads, watchers)
+
+- **Hugging Face model downloads stall on these hosts** (SDXL/TRELLIS weights hang mid-fetch, leaving
+  `*.incomplete` in `~/.cache/huggingface`). Fix: set `HF_HUB_DOWNLOAD_TIMEOUT=30` and wrap
+  `snapshot_download(...)` (resumes by default) in a retry loop so a stall fails fast and retries.
+  Pre-download weights before the generation step rather than letting it fetch mid-run.
+- **A process-presence watcher (`pgrep`) CANNOT detect a hang** — a frozen process is still "alive",
+  so the watcher waits forever. Watch the **log mtime** instead: declare a stall if the log hasn't
+  changed in N minutes (~7), in addition to success/error markers and process-gone. A bash launcher
+  wrapper can also stay alive after its python child dies, further fooling pgrep.
+
 ## Mesh → printable
 
 - **TRELLIS meshes are NOT watertight** — they're 1000+ disconnected shells (hair/body/clothing).

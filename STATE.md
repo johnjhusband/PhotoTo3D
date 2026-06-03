@@ -41,6 +41,13 @@ filament colors, color-vs-paint) is a parameter. Current input type: concept art
   and RUNNING on the box over the 6 candidates with an LLM-written character prompt → `out_consol/`
   (currently downloading SDXL). Will produce `canonical.png` + a 3D model to compare vs single/multi.
 
+## Step A run note (2026-06-03)
+
+First consolidation run STALLED on a hung Hugging Face SDXL download (process alive but frozen 30+ min;
+process-presence watcher couldn't detect it). Restarted via `launch_consol2.sh`: pre-downloads SDXL +
+IP-Adapter with resume + retry loop + `HF_HUB_DOWNLOAD_TIMEOUT=30`, then runs the pipeline. New watcher
+is **stall-aware** (log-mtime + markers + process). End-of-turn Stop hook for repo sync is now live.
+
 ## Next
 
 1. When Step A finishes: pull `out_consol/{canonical.png,model.*}`, render with F3D, send John the
