@@ -55,6 +55,15 @@ is **stall-aware** (log-mtime + markers + process). End-of-turn Stop hook for re
   (`pal_part{0-3}_<hex>.stl`). Sent John. Finding: 4 colors all dark (source texture is dark/low
   contrast) → effectively hair-vs-body. Lever: supply explicit filament colors + region mapping.
 
+## FULL-BODY FIGURINE achieved (2026-06-03)
+
+Got the head-to-toe figurine John wanted. Recipe (see DECISIONS #18): consolidate at low IP scale
+(0.4) + "full figure head to toe" prompt → SDXL full-body sheet → crop central figure (`out_consol/
+fb_final.png`) → HQ TRELLIS → `out_fb/` (model + watertight `printable.stl` 79k faces + color). Sent
+John the render. Quality: complete figure but softer/lower-detail than the busts. Key fact: only 1 of
+6 inputs (the 120x98 pixel sprite `OIP (1).png`) is full-body — the rest are portraits.
+Open quality dial: high IP scale = faithful bust; low IP scale = full body but softer.
+
 ## Consolidation pipeline WORKS (2026-06-03)
 
 SDXL+IP-Adapter consolidation runs end-to-end on the box from a LOCAL copy of SDXL (11GB, curl-streamed
