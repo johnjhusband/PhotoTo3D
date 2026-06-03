@@ -14,6 +14,12 @@ import os, sys, glob
 os.environ.setdefault("ATTN_BACKEND", "xformers")
 os.environ.setdefault("SPCONV_ALGO", "native")
 
+# Python puts THIS script's dir on sys.path, not the cwd, so the `trellis` package (in the cloned
+# repo) isn't found when the script lives elsewhere. Add TRELLIS_HOME (or the common clone path).
+_trellis_home = os.environ.get("TRELLIS_HOME", "/workspace/TRELLIS")
+if os.path.isdir(os.path.join(_trellis_home, "trellis")) and _trellis_home not in sys.path:
+    sys.path.insert(0, _trellis_home)
+
 from PIL import Image
 import imageio
 from trellis.pipelines import TrellisImageTo3DPipeline
