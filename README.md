@@ -46,6 +46,12 @@ gpu/        GPU generative (TRELLIS) install + runner
 deploy/     Hetzner provisioning + snapshot park/wake cost scripts
 ```
 
+## Status
+
+The generative (GPU) pipeline works end to end: image(s) → TRELLIS → textured mesh → watertight,
+printable STL/3MF. See `STATE.md` for live status and `TROUBLESHOOTING.md` for the install/ops gotchas
+(there are many — GitHub HTTP/2, dependency pins, build isolation, xformers, vast SSH quirks).
+
 ## Secrets
 
 API keys live in `.env` (gitignored), e.g. `VAST_API_KEY=...`. Never committed.

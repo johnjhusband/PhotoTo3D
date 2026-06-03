@@ -22,8 +22,9 @@ Stages 1–4 of DESIGN.md plus slicing-to-G-code:
 1. **Input curation** — `pipeline/prep_images.py` (cull blur, mask background); optional text-guided
    reference editing via an inpainting model.
 2. **Generation** — `gpu/run_trellis.py` (single or multi-image → textured GLB → STL/3MF).
-3. **Mesh repair for printing** — `pipeline/repair_mesh.py` (+ Blender headless for geometry edits;
-   artistic edits = script→render→look loop).
+3. **Mesh repair for printing** — `pipeline/repair_mesh.py`: voxel-remeshes the 1000+ TRELLIS shells
+   into ONE watertight solid, smooths, decimates, pymeshfix. (+ Blender headless for geometry edits;
+   artistic edits = script→render→look loop.)
 4. **Palette-to-N color** — quantize the texture to N = the printer's spool count, snap to real
    filament colors, bake per-region into 3MF. *(Stage to be implemented; spool count is an input.)*
 5. **Slicing** — slicer CLI (OrcaSlicer/PrusaSlicer/Cura) with the printer profile → G-code.
@@ -36,7 +37,10 @@ Stages 1–4 of DESIGN.md plus slicing-to-G-code:
   overrides the saved key. Search → `vastai search offers '...'`; rent → `vastai create instance`;
   list → `vastai show instances`; kill → `vastai destroy instance <id>`.
 - **GPU box install** — `gpu/install_trellis.sh` (TRELLIS + CUDA deps on a pytorch-cuda-devel image).
-- **GPU box run** — `gpu/run_trellis.py <out_dir> <img...>` (multi-image auto when >1).
+  Known pitfalls and their fixes are documented in **TROUBLESHOOTING.md** — read it before debugging.
+- **GPU box run** — from `/workspace/TRELLIS`:
+  `PYTHONPATH=/workspace/TRELLIS ATTN_BACKEND=xformers SPCONV_ALGO=native python /workspace/run_trellis.py <out_dir> <img...>`
+  (multi-image auto when >1, but single best image gives better results on mixed-style sets).
 - **CPU photogrammetry** — `pipeline/run.sh <images_dir> <work_dir>` (dormant).
 - **Hetzner** (CPU infra, if revived) — `deploy/provision-? `, `deploy/park.sh` / `deploy/wake.sh`.
 

@@ -29,11 +29,14 @@ chosen/edited reference.)*
 **2. 3D generation — TRELLIS** — reference image(s) → textured mesh (GLB). Render a turntable
 preview. *(Fully automated on the GPU box.)*
 
-**3. Geometry for printing — mesh repair (Blender headless + pymeshfix)** — watertight/manifold,
-drop floating islands, fix normals, decimate. Scale to build volume; add a base so it stands;
-hollow if wanted; check min wall thickness; split into parts if it exceeds build volume. *(Fully
-automated. Artistic geometry tweaks — e.g. lengthen the cloak — are a script→render→look loop, or
-manual Blender for fussy work.)*
+**3. Geometry for printing — mesh repair (`repair_mesh.py`)** — generative meshes come out as 1000+
+disconnected shells (hair/body/clothing), NOT a watertight solid, so this stage is mandatory. It
+**voxel-remeshes all shells into one solid** (shrink-wrap), smooths the voxel stair-stepping (Taubin),
+decimates to a printable triangle budget, then runs pymeshfix LAST as the watertight guarantee. (Order
+matters: decimating after pymeshfix re-opens the surface.) Still to add: scale to build volume, add a
+base, hollow, min-wall-thickness check, split if over build volume. *(Automated. Artistic geometry
+tweaks — e.g. lengthen the cloak — are a script→render→look loop, or manual Blender. Note: headless
+geometry rendering needs a display stack that isn't installed; use TRELLIS's turntable preview.)*
 
 **4. Color resolution — palette-to-N** — TRELLIS outputs a continuous texture (hundreds of shades);
 a multi-color FDM printer can't do that, so we **must** reduce it. Quantize surface colors to

@@ -11,9 +11,10 @@ off is written here. Read it and you are caught up.
 3. **DESIGN.md** — the full technical pipeline, reasoned backward from the printed object.
 4. **DECISIONS.md** — settled decisions and *why*. Do not re-litigate these.
 5. **STATE.md** — the live status: what's done, what's running right now, what's next, open questions.
-6. **README.md** — public-facing overview (lighter than the above).
+6. **TROUBLESHOOTING.md** — hard-won install/ops/mesh gotchas and their fixes. Read before debugging.
+7. **README.md** — public-facing overview (lighter than the above).
 
-After reading those six, you understand what the previous instance understood. Continue from the
+After reading those, you understand what the previous instance understood. Continue from the
 "Next" section of STATE.md.
 
 ## Checkpoint protocol — before you stop, or after any meaningful change

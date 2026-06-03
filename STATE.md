@@ -19,49 +19,35 @@ filament colors, color-vs-paint) is a parameter. Current input type: concept art
 - Reference image chosen: `candidates/gXAmE1Bn2dubu5B-OCEe4.png` (umbrella illustration); runner
   updated for multi-image.
 
-## DONE — first figurine generated (2026-06-03)
+## DONE — pipeline works end to end (2026-06-03)
 
-- TRELLIS install fully working on instance 39215079 (xformers backend, all CUDA extensions built).
-- Single-image generation succeeded from the umbrella ref → `out_single/{model.glb,model.stl,
-  preview.mp4,turntable_montage.png}`. Recognizable character (hair/scarf/pose), umbrella excluded.
-  Sent to John. STL pulled to laptop at `out_single/`.
-- Final install fixes beyond the clone/open3d/build-isolation ones: transformers pinned 4.46.3;
-  TRELLIS sparse-attn patched for xformers 0.0.28 BlockDiagonalMask path; lxml installed for 3MF;
-  run via `PYTHONPATH=/workspace/TRELLIS` (script adds TRELLIS_HOME to sys.path now).
-
-## In flight / Next-now
-
-- **TRELLIS install running** on instance 39215079. Clone + basic deps + open3d pre-pin all pass;
-  now building the CUDA extensions (spconv/nvdiffrast/kaolin/diffoctreerast/mipgaussian).
-- **flash-attn dropped for xformers.** flash-attn failed (build-isolation `No module named torch`,
-  plus slow/OOM source build). Switched `ATTN_BACKEND=xformers` + prebuilt `xformers==0.0.28.post1`
-  (cu121 wheel) in both install + run scripts. xformers is TRELLIS's supported alternative backend.
-- **Clone failure resolved.** Root cause was `curl 92 HTTP/2 stream CANCEL / early EOF` — fixed by
-  `git config --global http.version HTTP/1.1` (now in `install_trellis.sh`) plus shallow clone +
-  retries + separate submodule init.
-- **SSH gotchas (important for any future instance):**
-  - The vast **proxy** endpoint `ssh9.vast.ai:15078` is flaky for sustained sessions. Use the
-    **direct** endpoint instead: `ssh -i ~/.ssh/cto-deploy -p 29698 root@120.238.149.205` (stable).
-  - **Never `pkill -f install_trellis`** plainly — the pattern matches the SSH command's own shell and
-    kills the session (silent no-output). Use the bracket trick: `pkill -9 -f '[i]nstall_trellis'`.
+- TRELLIS install fully working on instance 39215079 (xformers backend; all CUDA extensions built).
+  Every install pitfall hit + fixed is in TROUBLESHOOTING.md; all fixes committed to install scripts.
+- **Single-image** generation from the umbrella ref → `out_single/` (glb/stl, preview.mp4, montage).
+  Recognizable character; umbrella excluded by bg-removal. Sent to John. ~72k-face raw mesh.
+- **Multi-image** generation over the candidate set → `out_multi/`. LOWER detail (~21k faces) — the
+  mixed art styles hurt it, as expected. Single best image is the better input here.
+- **Watertight printable** produced via `repair_mesh.py` (voxel-remesh → one solid → smooth →
+  decimate → pymeshfix): `out_single/printable.{stl,3mf}`, 199,908 faces, watertight=True. Pulled to
+  laptop.
 
 ## Next
 
-1. Fix the clone in `install_trellis.sh` and re-run the install on instance 39215079.
-2. Run TRELLIS: multi-image over the usable `candidates/` set, plus single-image on the umbrella ref;
-   compare previews.
-3. Send John the preview(s); on approval, repair → STL/3MF.
-4. Build the **palette-to-N** color stage (input: spool count). Needs John's printer profile when he
-   provides it.
-5. Once a good run exists: `docker commit` the box → push image to GHCR (reuse without idle cost) →
-   destroy the instance.
+1. Send John the single-vs-multi comparison + the watertight `printable.stl` (in progress).
+2. **Decide with John: keep generating / iterate, or wrap up.** If wrapping: `docker commit` the box
+   → push image to a registry (GHCR under johnjhusband) → `vastai destroy instance 39215079` to stop
+   billing. Reuse later from the image.
+3. Build the **palette-to-N** color stage (input: spool count) — needs John's printer profile.
+4. Remaining mesh-repair extras (scale to build volume, base, hollow, min-wall-thickness, split).
 
 ## Open questions for John
 
-- Printer profile details (spool count N, build volume, loaded filament colors, color-vs-paint) —
-  needed to finish stages 4–6. Treat as a per-job input; do not assume a specific printer.
+- Printer profile (spool count N, build volume, loaded filament colors, color-vs-paint) — needed for
+  stages 4–6. Per-job input; do NOT assume a specific printer.
+- Reusable-tool packaging shape (CLI? web upload?) — not yet specified; don't invent it.
 
 ## Cost note
 
-Instance 39215079 is **running and billing** (~$0.20/hr). Destroy it when not actively needed
-(`vastai destroy instance 39215079`); reuse via the committed Docker image.
+Instance **39215079 is running and billing (~$0.20/hr).** Destroy it when not actively needed
+(`vastai destroy instance 39215079`); reuse via a committed Docker image. SSH/ops gotchas: see
+TROUBLESHOOTING.md (use the direct endpoint, bracket-trick pkill, setsid for detached launches).
