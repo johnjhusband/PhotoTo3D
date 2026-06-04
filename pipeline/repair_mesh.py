@@ -103,8 +103,10 @@ def main():
     m = trimesh.load(inp, process=True, force="mesh")
     if isinstance(m, trimesh.Scene):
         m = trimesh.util.concatenate([g for g in m.geometry.values()])
-    print(f"[repair] loaded: {len(m.vertices)} v, {len(m.faces)} f, "
-          f"{len(m.split(only_watertight=False))} components")
+    # NOTE: do NOT call m.split() here just to count components — on a generative mesh with thousands
+    # of disconnected shells it is pathologically slow + memory-heavy (observed 54GB/3min hang). The
+    # alpha-wrap step doesn't need it; the only split we need is on the watertight result (1 shell).
+    print(f"[repair] loaded: {len(m.vertices)} v, {len(m.faces)} f")
 
     # capture original color before remeshing (transferred back onto the solid afterward).
     # For a textured/PBR mesh, sample the ALBEDO (baseColorTexture) at each vertex's UV — trimesh's
