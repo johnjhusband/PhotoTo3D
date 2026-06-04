@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""repair_mesh.py — turn a raw generated mesh into a watertight, printable mesh.
+"""repair_mesh.py — turn a raw generated mesh into a watertight, printable COLOR 3MF.
+
+Deliverable is a color 3MF (DECISIONS #19: STL dropped — it carries no color; 3MF is the
+multi-color printing standard). Color is written via lib3mf (export_color3mf), not trimesh.
+
 
 Generative meshes (TRELLIS) are many disconnected shells (hair/body/clothing) with holes — not
 print-ready. PREFERRED method: CGAL 3D Alpha Wrapping (via the `alpha_wrap` binary) — produces a
@@ -104,12 +108,21 @@ def main():
         colored = True
         print("[repair] transferred color onto solid")
 
-    solid.export(f"{base}.stl")
-    solid.export(f"{base}.3mf")
+    # Deliverable = COLOR 3MF (DECISIONS #19: drop STL — it carries no color; 3MF is the
+    # multi-color printing standard). Color is written via lib3mf (trimesh's 3MF has no color).
     if colored:
-        solid.export(f"{base}_color.glb")
+        solid.export(f"{base}_color.glb")   # for viewing in F3D
         solid.export(f"{base}_color.ply")
-        print(f"[repair] wrote {base}_color.glb/.ply (with color)")
+        try:
+            from export_color3mf import export_color_3mf  # same dir on the box
+            vc = np.asarray(solid.visual.vertex_colors)
+            n = export_color_3mf(np.asarray(solid.vertices), np.asarray(solid.faces), vc, f"{base}.3mf")
+            print(f"[repair] wrote COLOR 3MF {base}.3mf ({n} colors) + {base}_color.glb/.ply")
+        except Exception as e:
+            print(f"[repair] color-3MF failed ({e}); colorless 3MF fallback")
+            solid.export(f"{base}.3mf")
+    else:
+        solid.export(f"{base}.3mf")  # geometry-only when the source had no color
     print(f"[repair] FINAL watertight={solid.is_watertight} faces={len(solid.faces)} "
           f"volume={round(solid.volume, 4) if solid.is_watertight else 'n/a'}")
 
