@@ -114,6 +114,25 @@ def main():
     faces = np.asarray(m.faces)
     flab = np.array([np.bincount(labels[f], minlength=N).argmax() for f in faces])
 
+    # SPATIAL CLEANUP: the texture has per-face noise that quantizes into SPECKLES (brown spots on a
+    # white coat). Smooth the per-face labels by neighbor-majority voting over the face-adjacency graph
+    # so each material becomes one CONTIGUOUS region (what a multi-color print needs). Env SMOOTH_PASSES.
+    passes = int(os.environ.get("SMOOTH_PASSES", "6"))
+    if passes > 0:
+        adj = m.face_adjacency  # Kx2 pairs of touching faces
+        from scipy.sparse import coo_matrix
+        nf = len(faces)
+        A = coo_matrix((np.ones(len(adj) * 2),
+                        (np.concatenate([adj[:, 0], adj[:, 1]]),
+                         np.concatenate([adj[:, 1], adj[:, 0]]))), shape=(nf, nf)).tocsr()
+        for _ in range(passes):
+            # for each face, tally neighbor labels (+ itself) and take the majority
+            onehot = np.zeros((nf, N))
+            onehot[np.arange(nf), flab] = 1.0
+            votes = A.dot(onehot) + onehot   # neighbors + self
+            flab = votes.argmax(1)
+        print(f"[palette] spatial label smoothing: {passes} neighbor-majority passes")
+
     # EXPLODE: each triangle gets its own 3 vertices, all one flat palette color -> no bleed
     tri_verts = np.asarray(m.vertices)[faces].reshape(-1, 3)
     tri_faces = np.arange(len(tri_verts)).reshape(-1, 3)
