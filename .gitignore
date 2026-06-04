@@ -31,3 +31,6 @@ _sdxl/
 *.png
 *.mp4
 *.log
+_dino/
+_qa/
+*.jpg

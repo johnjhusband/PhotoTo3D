@@ -181,3 +181,9 @@ Spend so far ~$5.5 of $25 vast credit. Box still up.
 NEXT (needs John): printer profile (spool count) to run palette-to-N for the real color print; decide
 whether the modest Hunyuan color gain is worth keeping in the default path or only the textured-GLB view.
 
+## Print-color path VALIDATED (2026-06-04)
+Hunyuan albedo → `palette_quantize.py` N=4 → 4 CLEAN distinct filament regions (white coat #cdc3d4,
+purple scarf #8d66af, dark dress #452e43, near-black #13090d) — NO splotches. Proves the per-vertex
+artifact is resolved by quantizing to N filament colors (the real multi-color print path). Sent John.
+Blocked on John: real spool count + loaded filament colors to snap the palette; box park/destroy decision.
+
