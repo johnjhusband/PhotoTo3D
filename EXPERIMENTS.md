@@ -98,6 +98,20 @@ Fix: never let the 3D model invent. Complete the reference in **2D first**, then
   regions. Then repair + 4-color on the delit mesh. After: umbrella SDXL inpaint, and E4 (TRELLIS.2) if
   geometry still soft.
 
+- 2026-06-04 **SPECKLE FIXED → clean vivid 4-color.** `palette_quantize.py` now COLOR-PRE-SMOOTHS
+  (Laplacian blur of per-vertex colors over the mesh) before k-means → the delit texture's patchy
+  artifacts average into CONTIGUOUS regions (solid brown hair / blue scarf / white coat / dark blue),
+  not speckle. This + delighting + gamma + chroma-weight = a genuinely clean, vivid 4-color figurine
+  with a real face. Consolidated to FINAL/ (figurine_4color.3mf + 4 material STLs + fullcolor_model.glb).
+- 2026-06-04 **E4 TRELLIS.2 DEFERRED (env conflict).** Install ran (flash-attn built ~30min) but
+  generation needs `DINOv3ViTModel` → transformers 5.x → **torch ≥2.6** (`float8_e8m0fnu`); TRELLIS-1
+  needs torch 2.4.1. Hard conflict in the shared env. TRELLIS.2 would need its OWN torch-2.6 env +
+  rebuilt flash-attn/o-voxel/CUDA-exts — big rabbit hole for uncertain geometry gain. Restored
+  transformers 4.46.3 (TRELLIS-1/Hunyuan intact). Geometry sharpening parked behind this.
+- **REMAINING (my honest quality verdict: GOOD, not perfect):** umbrella still attached (needs SDXL
+  inpaint on the reference + a ~1hr full regen), geometry soft/lumpy (needs TRELLIS.2 = separate env),
+  bust by design. Core deliverable (clean vivid 4-color figurine w/ real face) is achieved.
+
 ## Acceptance (when do we stop)
 A rendered **4-color printable** where: the face has real features (eyes/mouth), color is bright and
 matches the reference palette with 4 clean regions (no splotch), geometry is crisp, and nothing is
