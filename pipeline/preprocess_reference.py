@@ -12,6 +12,9 @@ Outputs (PNG, RGB on gray — feed to TRELLIS with preprocess_image=False so it 
   <out>/ref_full.png   — whole subject, bg removed, on gray, squared
   <out>/ref_bust.png   — head+shoulders crop (face large) for a faithful bust
 Usage: preprocess_reference.py <input_image> <out_dir> [--bg gray|white|none] [--bust-frac 0.55]
+                              [--top-crop 0.0]
+  --top-crop F : drop the top F fraction of the subject BEFORE cropping — removes a held overhead prop
+                 (e.g. the umbrella) that bg-removal keeps but which would become spurious geometry.
 """
 import os, sys
 import numpy as np
@@ -25,16 +28,18 @@ def _args(argv):
     if len(argv) < 3:
         sys.exit("usage: preprocess_reference.py <input_image> <out_dir> [--bg gray|white|none] [--bust-frac 0.55]")
     inp, out = argv[1], argv[2]
-    bg, bust_frac = "gray", 0.55
+    bg, bust_frac, top_crop = "gray", 0.55, 0.0
     i = 3
     while i < len(argv):
         if argv[i] == "--bg":
             bg = argv[i + 1]; i += 2
         elif argv[i] == "--bust-frac":
             bust_frac = float(argv[i + 1]); i += 2
+        elif argv[i] == "--top-crop":
+            top_crop = float(argv[i + 1]); i += 2
         else:
             i += 1
-    return inp, out, bg, bust_frac
+    return inp, out, bg, bust_frac, top_crop
 
 
 def composite(rgba, bg):
@@ -69,13 +74,22 @@ def square(img, bg):
 
 
 def main():
-    inp, out, bg, bust_frac = _args(sys.argv)
+    inp, out, bg, bust_frac, top_crop = _args(sys.argv)
     os.makedirs(out, exist_ok=True)
     src = Image.open(inp).convert("RGBA")
-    print(f"[prep] {inp} {src.size} -> bg-removal (isnet-anime), backing={bg}")
+    print(f"[prep] {inp} {src.size} -> bg-removal (isnet-anime), backing={bg}, top_crop={top_crop}")
 
     session = new_session("isnet-anime")
     cut = remove(src, session=session)  # RGBA with anime-tuned alpha
+
+    # drop an overhead prop (umbrella): zero the alpha above the subject's top + top_crop fraction
+    if top_crop > 0:
+        l0, t0, r0, b0 = subject_bbox(cut, pad=0.0)
+        cutoff = int(t0 + (b0 - t0) * top_crop)
+        arr = np.asarray(cut).copy()
+        arr[:cutoff, :, 3] = 0
+        cut = Image.fromarray(arr, "RGBA")
+        print(f"[prep] top-crop removed everything above y={cutoff} (umbrella prop)")
 
     # full subject, cropped + squared
     l, t, r, b = subject_bbox(cut)

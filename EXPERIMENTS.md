@@ -52,8 +52,29 @@ Fix: never let the 3D model invent. Complete the reference in **2D first**, then
 
 ## Log
 - 2026-06-04: research done (4 parallel streams, cited). `preprocess_reference.py` built; **verified
-  locally that isnet-anime bg-removal PRESERVES the face** (root-cause fix for defect #1). Next: restart
-  box, run E1.
+  locally that isnet-anime bg-removal PRESERVES the face** (root-cause fix for defect #1).
+- 2026-06-04: `palette_quantize.py` rewritten (Lab k-means + flat per-face + ΔE). Verified locally on
+  the old GLB: per-face regions are flat (splotch gone), and the ΔE check **proved the dark texture
+  collapses 3/4 regions into browns** — color is the gating defect.
+- 2026-06-04: built `color_correct.py` (gray-world WB + contrast stretch + saturation + gamma) and
+  tested post-hoc rescue on the dark GLB. FINDING: correction can SEPARATE the 4 regions (ΔE rises,
+  blue scarf 53→889 verts) BUT **distorts accuracy — the brown-dominant low-contrast model blows out
+  to near-white** (mean 75→220) at any strength strong enough to separate. CONCLUSION: post-hoc
+  correction is only a gentle final polish; brightness/contrast/accuracy MUST come from regeneration
+  (source sRGB/gamma fix + delight, then a GENTLE resaturate on a good texture). Tool is ready for that.
+- 2026-06-04 (more no-GPU fixes, parallel to the box wait — all built + checked, validate on box):
+  - **Umbrella:** `preprocess_reference.py --top-crop` drops the overhead prop. Verified locally: the
+    umbrella canopy is removed, face kept large. (Thin ribs at face height remain → SDXL inpaint later.)
+  - **Geometry upgrade ready:** `gpu/install_trellis2.sh` + `gpu/run_trellis2.py` for **TRELLIS.2-4B**
+    (O-Voxel, MIT, sharp geometry), grounded in the real API (`Trellis2ImageTo3DPipeline.run`,
+    `o_voxel.postprocess.to_glb`). Flash-attn-on-3090 fallback to xformers handled. Needs box to build.
+  - **Color-correct wired** into `run_pipeline.sh` (CC=1, gentle defaults) before quantize.
+  - **Full-body decision:** default = **BUST** (MODE=bust) until an on-model full-body 2D ref is
+    produced+approved (FLUX-Kontext/CharacterGen = optional E6). No 3D model is asked to invent legs.
+- BLOCKED: GPU box (39215079) restart queued ~40min, slot not freed. Watcher polling to ~60min.
+  Pending John: keep waiting (free, keeps install) vs rent fresh box (spend + reinstall). Next when box
+  up: E1 (preprocessed bust, top-crop, SS_CFG 9, repair, 4-color, gentle CC), judge; then E4 (TRELLIS.2)
+  if geometry still soft.
 
 ## Acceptance (when do we stop)
 A rendered **4-color printable** where: the face has real features (eyes/mouth), color is bright and

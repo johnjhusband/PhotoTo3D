@@ -77,12 +77,23 @@ fi
 echo "[pipeline] repair -> color 3MF ($MESH)"
 python "$REPAIR_PY" "$MESH" "$OUT/printable"
 
+# 3.5) optional gentle color correction (CC=1): white-balance + contrast + saturation lift so the N
+# print regions separate into distinct filament colors. GENTLE by default — strong settings wash a
+# brown-dominant model to white (verified). Best used on an already-bright/delit texture.
+QSRC="$OUT/printable_color.glb"
+if [ "${CC:-0}" = "1" ] && [ -f "$QSRC" ]; then
+  echo "[pipeline] gentle color-correct before quantize"
+  python "$HERE/../pipeline/color_correct.py" "$QSRC" "$OUT/printable_cc.glb" \
+    --wb "${CC_WB:-0.4}" --sat "${CC_SAT:-1.4}" --gamma "${CC_GAMMA:-0.9}" --lo 1 --hi 99 \
+    && QSRC="$OUT/printable_cc.glb" || echo "[pipeline] color-correct failed; using raw color"
+fi
+
 # 4) palette-to-N: reduce to exactly N flat color REGIONS for the multi-material print (N=4 settled).
 # Quantizes in CIE-Lab + flat per-face (no splotch). Runs on the COLORED repaired GLB.
 NCOLOR="${NCOLOR:-4}"
-if [ -f "$OUT/printable_color.glb" ]; then
-  echo "[pipeline] palette-to-$NCOLOR (4-color print deliverable)"
-  python "$HERE/../pipeline/palette_quantize.py" "$OUT/printable_color.glb" "$OUT/print_${NCOLOR}color" "$NCOLOR" || \
+if [ -f "$QSRC" ]; then
+  echo "[pipeline] palette-to-$NCOLOR (4-color print deliverable) from $(basename "$QSRC")"
+  python "$HERE/../pipeline/palette_quantize.py" "$QSRC" "$OUT/print_${NCOLOR}color" "$NCOLOR" || \
     echo "[pipeline] palette_quantize failed (non-fatal)"
 fi
 
