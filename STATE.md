@@ -3,6 +3,23 @@
 **Last updated:** 2026-06-03 by Claude. Keep this current; it is the working memory a fresh instance
 inherits. Observed facts only — no guesses.
 
+## LIVE (2026-06-04 eve) — iterate-until-acceptable loop on new box 39505355
+
+John's standing order: iterate continuously until the 4-color print is acceptable. Progress:
+- **FACE: FIXED** (the #1 defect). Cause was photo-trained bg-removal clipping the pale anime face;
+  fix = `preprocess_reference.py` (isnet-anime/gray/bust crop) + TRELLIS `preprocess_image=False` +
+  ss_cfg 9. Verified in 3D (E1 front render shows real eye/eye-band/mouth).
+- **COLOR brightness: FIXED.** TRELLIS exports texture in LINEAR (median 23/255 → black). `color_correct.py`
+  gamma 0.5 restores it; baked into defaults.
+- **4-color regions: PARTLY.** chroma-weighted Lab k-means (LWEIGHT) makes regions follow materials.
+  Delighting (Hunyuan-Paint `model_pbr.glb`) gives 4 VIVID distinct colors (blue scarf/white coat/brown
+  hair/dark) — no ΔE collisions. BUT regions are SPECKLED (delit texture has patchy artifacts);
+  neighbor-majority label smoothing (`SMOOTH_PASSES`) only partly fixes it. Tradeoff: gamma=muted+coherent
+  vs delit=vivid+speckled.
+- **RUNNING: E4 TRELLIS.2-4B** (`bootstrap_trellis2.sh`) — sharper geometry + hopefully cleaner texture.
+- **OPEN:** umbrella remnant (needs SDXL inpaint; top-crop 0.18 is the safe max), speckle, soft geometry.
+- Tools all CPU-tested locally; generation/delight/repair on the box. Renders pulled to `_e1/`.
+
 ## Direction (locked)
 
 Reusable tool: images + printer profile → printable file. Printer (spool count N, build volume,
