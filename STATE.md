@@ -161,3 +161,23 @@ Single-image path is unaffected and is the working deliverable.
 Instance **39215079 is running and billing (~$0.20/hr).** Destroy it when not actively needed
 (`vastai destroy instance 39215079`); reuse via a committed Docker image. SSH/ops gotchas: see
 TROUBLESHOOTING.md (use the direct endpoint, bracket-trick pkill, setsid for detached launches).
+
+## Quality pass COMPLETE (2026-06-04) — all 4 backlog fixes implemented, honest caveats
+
+1. Cape/detail: CGAL alpha-wrap repair — DONE, tested (sharper, watertight).
+2. Color-3MF deliverable, STL dropped — DONE, tested.
+3. Hunyuan-Paint re-texture — DONE end-to-end (install + run, `model_pbr.glb`). Delit albedo is correct
+   (white coat white, etc.) but only a MODEST brightness gain — the character is inherently dark.
+   Good color lives in the textured GLB. CAVEAT: converting the UV texture to PER-VERTEX color in
+   repair is lossy/splotchy (saturated purple scarf bleeds). For real multi-color PRINTING this is
+   moot — `palette_quantize.py` (palette-to-N) reduces to N clean filament regions, the actual print
+   color path. `repair_mesh.py` now samples the albedo texture at UVs (not trimesh to_color which
+   mishandles multi-map PBR).
+4. PBR-SR: deprioritized (Hunyuan texture supersedes; needs separate CUDA-11.8 env).
+
+Reproducible: `gpu/run_pipeline.sh ... ` (HY_PAINT=1 for re-texture). Hunyuan install = `gpu/install_hunyuan.sh`.
+Spend so far ~$5.5 of $25 vast credit. Box still up.
+
+NEXT (needs John): printer profile (spool count) to run palette-to-N for the real color print; decide
+whether the modest Hunyuan color gain is worth keeping in the default path or only the textured-GLB view.
+

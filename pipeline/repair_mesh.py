@@ -39,6 +39,46 @@ def watertight_alpha_wrap(m, awbin, rel_alpha, rel_offset):
         return trimesh.Trimesh(vertices=np.asarray(w.vertices), faces=np.asarray(w.faces), process=True)
 
 
+def sample_albedo_colors(m):
+    """Per-vertex RGBA by sampling the albedo texture at each vertex UV. Falls back to vertex_colors,
+    then to trimesh to_color(). Returns Nx4 uint8 aligned to m.vertices, or None."""
+    import PIL.Image
+    vis = getattr(m, "visual", None)
+    try:
+        if isinstance(vis, trimesh.visual.TextureVisuals) and vis.uv is not None and vis.material is not None:
+            mat = vis.material
+            img = getattr(mat, "baseColorTexture", None)
+            if img is None:
+                img = getattr(mat, "image", None)
+            if img is not None:
+                tex = np.asarray(img.convert("RGB"))
+                h, w = tex.shape[:2]
+                uv = np.asarray(vis.uv, dtype=float)
+                px = np.clip((uv[:, 0] % 1.0 * (w - 1)).astype(int), 0, w - 1)
+                py = np.clip(((1.0 - uv[:, 1] % 1.0) * (h - 1)).astype(int), 0, h - 1)
+                rgb = tex[py, px]
+                out = np.full((len(rgb), 4), 255, np.uint8)
+                out[:, :3] = rgb
+                if out.shape[0] == len(m.vertices):
+                    return out
+    except Exception as e:
+        print(f"[repair] albedo-UV sampling failed ({e}); falling back")
+    # fallbacks
+    try:
+        vc = np.asarray(vis.vertex_colors)
+        if vc.shape[0] == len(m.vertices):
+            return vc
+    except Exception:
+        pass
+    try:
+        vc = np.asarray(vis.to_color().vertex_colors)
+        if vc.shape[0] == len(m.vertices):
+            return vc
+    except Exception:
+        return None
+    return None
+
+
 def watertight_voxel(m, voxel_div):
     pitch = float(m.extents.max()) / voxel_div
     print(f"[repair] voxel remesh fallback at pitch={pitch:.5f}")
@@ -66,16 +106,13 @@ def main():
     print(f"[repair] loaded: {len(m.vertices)} v, {len(m.faces)} f, "
           f"{len(m.split(only_watertight=False))} components")
 
-    # capture original color before remeshing (transferred back onto the solid afterward)
+    # capture original color before remeshing (transferred back onto the solid afterward).
+    # For a textured/PBR mesh, sample the ALBEDO (baseColorTexture) at each vertex's UV — trimesh's
+    # to_color() mishandles multi-map PBR materials (returns dark/wrong color -> magenta artifacts).
     src_pts = np.asarray(m.vertices)
-    src_colors = None
-    try:
-        c = np.asarray(m.visual.to_color().vertex_colors)
-        if c.shape[0] == src_pts.shape[0]:
-            src_colors = c
-    except Exception as e:
-        print(f"[repair] no source color ({e})")
-    print(f"[repair] source has color: {src_colors is not None}")
+    src_colors = sample_albedo_colors(m)
+    print(f"[repair] source has color: {src_colors is not None}"
+          + (f" (mean {np.asarray(src_colors)[:, :3].mean(0).round(0).tolist()})" if src_colors is not None else ""))
 
     # PREFERRED: alpha-wrap (detail-preserving). FALLBACK: voxel remesh.
     solid = None
