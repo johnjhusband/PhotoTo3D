@@ -73,6 +73,15 @@ runs through the working TRELLIS path directly (no SDXL, no download fight).
   changed in N minutes (~7), in addition to success/error markers and process-gone. A bash launcher
   wrapper can also stay alive after its python child dies, further fooling pgrep.
 
+## Color formats
+
+- **STL has no color, ever** — geometry only, shows as one color in every viewer. Expected. Color
+  lives in GLB/PLY/3MF. For multi-color PRINTING the standard is **3MF** (slicer assigns filaments →
+  G-code). STL is a strict subset of 3MF and redundant for color work — prefer 3MF, drop STL.
+- **trimesh's `.export(".3mf")` does NOT embed vertex colors** — the 3MF comes out geometry-only.
+  So `repair_mesh.py`'s current 3MF has no color (color is only in the `*_color.glb`). To get a real
+  color 3MF, use a proper writer (lib3mf, or build the 3MF color extension XML) — not trimesh's export.
+
 ## Mesh → printable
 
 - **TRELLIS meshes are NOT watertight** — they're 1000+ disconnected shells (hair/body/clothing).

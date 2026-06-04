@@ -55,6 +55,19 @@ is **stall-aware** (log-mtime + markers + process). End-of-turn Stop hook for re
   (`pal_part{0-3}_<hex>.stl`). Sent John. Finding: 4 colors all dark (source texture is dark/low
   contrast) → effectively hair-vs-body. Lever: supply explicit filament colors + region mapping.
 
+## QUALITY PASS in progress (2026-06-03) — not done yet
+
+John: outputs "still have a ways to go." Concrete gaps to fix:
+- Color is dark, low-contrast, muddy, inaccurate (GLB contrast poor).
+- Voxel-remesh repair TRUNCATES thin features — full-body cape cut off at the shoulders.
+- Geometry soft/low-detail.
+- Output format: switch to **color 3MF** as the single deliverable, DROP STL (DECISIONS #19). Current
+  3MF is geometry-only (trimesh limitation) — needs a real color-3MF writer (lib3mf).
+Deep-research running on improvements (better models like Hunyuan3D-2.1/Hi3DGen/Step1X-3D, detail-
+preserving watertight repair like alpha-wrap/ManifoldPlus, texture/color quality). Apply findings next.
+
+Hooks now live (~/.claude): Stop hook cleanup (sweeps render frames/empty dirs) + repo-sync.
+
 ## FULL-BODY FIGURINE achieved (2026-06-03)
 
 Got the head-to-toe figurine John wanted. Recipe (see DECISIONS #18): consolidate at low IP scale

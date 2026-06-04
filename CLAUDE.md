@@ -27,6 +27,13 @@ After reading those, you understand what the previous instance understood. Conti
 If you don't write it down before you're turned off, it is gone. Treat the repo as the only thing
 that survives you.
 
+## Automation (Stop hooks, in ~/.claude/hooks/, registered in ~/.claude/settings.json)
+
+Two hooks run automatically every time the agent stops:
+- **phototo3d_cleanup.sh** — sweeps throwaway render frames + empty `out_*` dirs so cruft doesn't pile up.
+- **phototo3d_repo_sync.sh** — BLOCKS the stop if the repo has uncommitted/unpushed changes, forcing the
+  learning-loop + commit + push above. So do the checkpoint proactively; the hook is the backstop.
+
 ## Secrets
 
 API keys are in `.env` (gitignored), never committed. See AGENTS.md → Infrastructure for what's where.
