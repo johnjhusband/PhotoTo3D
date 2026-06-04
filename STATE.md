@@ -55,7 +55,28 @@ is **stall-aware** (log-mtime + markers + process). End-of-turn Stop hook for re
   (`pal_part{0-3}_<hex>.stl`). Sent John. Finding: 4 colors all dark (source texture is dark/low
   contrast) → effectively hair-vs-body. Lever: supply explicit filament colors + region mapping.
 
-## QUALITY PASS in progress (2026-06-03) — not done yet
+## QUALITY PASS (2026-06-03) — defect backlog from deep-research, implementing all
+
+Research report (verified) → fix backlog. Status:
+1. **Cape/detail (DONE)** — CGAL alpha-wrap repair (`gpu/alpha_wrap.cpp`, `repair_mesh.py`), preserves
+   thin features. Validated sharper. Committed.
+2. **Color 3MF (DONE)** — `gpu/export_color3mf.py` (lib3mf, real slicer-readable color; trimesh can't).
+   Built+tested by a parallel agent. Committed. TODO: wire into pipeline as the deliverable, drop STL.
+3. **Color QUALITY (IN PROGRESS)** — Hunyuan3D-Paint re-texture. KEY: paint-only re-textures our
+   EXISTING TRELLIS mesh (`use_remesh=False`), ~21GB VRAM (fits 3090, texture-only). Only need the
+   paint model (`tencent/Hunyuan3D-2.1` → `hunyuan3d-paintpbr-v2-1/*`, ~7GB) — NOT the shape model.
+   Downloading to `/workspace/_hunyuan/weights` (curl-stream) + repo tarball. Recipe in git history of
+   this commit / agent output. Run: `Hunyuan3DPaintPipeline(...)(mesh_path, image_path, use_remesh=False)`.
+   Build its 2 CUDA exts (`custom_rasterizer`, `DifferentiableRenderer`) in a SEPARATE venv with
+   `--no-build-isolation`. License: Tencent community (excludes EU/UK/SK, 1M MAU cap — fine for us).
+4. **PBR-SR (DEPRIORITIZED)** — needs separate CUDA-11.8 env; Hunyuan-Paint already gives higher-res
+   texture. Optional polish later. Fallback: Real-ESRGAN on the UV map (BSD, <1GB).
+
+Parallelism note: used 3 parallel agents to produce recipes 2/3/4 concurrently — works for prep, but
+GPU runs serialize on the one box. Box network is the recurring blocker (downloads stall/collapse
+intermittently; SSH stays up). Resumable curl + rsync is how we get past it.
+
+## (superseded) earlier quality-pass note
 
 John: outputs "still have a ways to go." Concrete gaps to fix:
 - Color is dark, low-contrast, muddy, inaccurate (GLB contrast poor).
