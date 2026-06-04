@@ -152,8 +152,8 @@ Single-image path is unaffected and is the working deliverable.
 
 ## Open questions for John
 
-- Printer profile (spool count N, build volume, loaded filament colors, color-vs-paint) — needed for
-  stages 4–6. Per-job input; do NOT assume a specific printer.
+- Spool count: ANSWERED — N=4. Filament colors: N/A (slicer-time, swappable — never ask). Build
+  volume + color-vs-paint still per-job inputs for a *different* printer; do NOT assume a specific one.
 - Reusable-tool packaging shape (CLI? web upload?) — not yet specified; don't invent it.
 
 ## Cost note
@@ -177,6 +177,19 @@ TROUBLESHOOTING.md (use the direct endpoint, bracket-trick pkill, setsid for det
 
 Reproducible: `gpu/run_pipeline.sh ... ` (HY_PAINT=1 for re-texture). Hunyuan install = `gpu/install_hunyuan.sh`.
 Spend so far ~$5.5 of $25 vast credit. Box still up.
+
+## 4-MATERIAL DELIVERABLE SHIPPED (2026-06-04)
+
+Produced and delivered to John: `FINAL/figurine_4material.3mf` (4 distinct color REGIONS, 15673 v /
+31354 tris, written by `gpu/export_color3mf.py`) + `FINAL/material1..4.stl` (same regions split per
+material). Path: Hunyuan albedo GLB → `palette_quantize.py` to 4 colors → `export_color3mf`.
+
+**N=4 is SETTLED — do not re-ask spool count.** In multi-material printing only the N color *regions*
+go in the file; the physical filament color per slot is chosen in the slicer at print time and is
+swappable. NEVER ask John which filament color goes where, and NEVER ask the spool count again.
+(See memory `feedback_multicolor_print_regions_not_filament_colors`.) John's words: "i have four
+spools 4 colors it's fucking 4! You don't fucking need to know what the fuck the colors are because
+they can be changed based on the need of the print!"
 
 NEXT (needs John): printer profile (spool count) to run palette-to-N for the real color print; decide
 whether the modest Hunyuan color gain is worth keeping in the default path or only the textured-GLB view.
