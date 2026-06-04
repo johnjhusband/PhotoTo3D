@@ -158,9 +158,11 @@ Single-image path is unaffected and is the working deliverable.
 
 ## Cost note
 
-Instance **39215079 is running and billing (~$0.20/hr).** Destroy it when not actively needed
-(`vastai destroy instance 39215079`); reuse via a committed Docker image. SSH/ops gotchas: see
-TROUBLESHOOTING.md (use the direct endpoint, bracket-trick pkill, setsid for detached launches).
+Instance **39215079 STOPPED 2026-06-04** (`vastai stop instance 39215079`) — compute billing halted,
+disk preserved, restart on demand (`vastai start instance 39215079`) AS LONG AS that GPU slot is still
+free. John's call: stop (not destroy) until he likes the images; destroy+Docker-image is NOT the path
+yet. Small storage fee continues while stopped. Use `vastai show instances-v1` (the old `show instances`
+is deprecated/410). SSH/ops gotchas: see TROUBLESHOOTING.md.
 
 ## Quality pass COMPLETE (2026-06-04) — all 4 backlog fixes implemented, honest caveats
 
@@ -190,6 +192,19 @@ swappable. NEVER ask John which filament color goes where, and NEVER ask the spo
 (See memory `feedback_multicolor_print_regions_not_filament_colors`.) John's words: "i have four
 spools 4 colors it's fucking 4! You don't fucking need to know what the fuck the colors are because
 they can be changed based on the need of the print!"
+
+## Folder hygiene (2026-06-04) — for QA, look ONLY in FINAL/
+
+Cleaned up per John ("clean up after yourself"). The single place to QA outputs is **`FINAL/`**:
+- `1_FULLBODY_render.png`, `2_BUST_render.png`, `3_4COLOR_render.png` — the QA images (3 angles each).
+- `1_FULLBODY_color.glb`, `2_BUST_color.glb` — full-color models. `*_printable.stl` — watertight geometry.
+- `figurine_4material.3mf` + `material1..4.stl` — the 4-region print deliverable.
+Inputs live in `candidates/` (the 6 fw.zip refs) + `samples/_montage.png`. Everything else was scratch.
+DELETED the `_qa/` scratch folder (intermediate + FAILED Hunyuan re-texture renders — the 06-04 Hunyuan
+per-vertex color came out splotchy/magenta, WORSE than the clean 06-03 deliverable) and the superseded
+`FINAL/pal_part*` STLs (old dark palette; `material*.stl` is the brighter Hunyuan-albedo palette-to-4).
+All regenerable from the box. NOTE: best color currently is the pre-Hunyuan textured GLB; the Hunyuan
+re-texture did not improve the final per-vertex/printable color. Color quality is the open QA item.
 
 NEXT (needs John): printer profile (spool count) to run palette-to-N for the real color print; decide
 whether the modest Hunyuan color gain is worth keeping in the default path or only the textured-GLB view.
