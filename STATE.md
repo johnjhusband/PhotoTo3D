@@ -195,10 +195,12 @@ they can be changed based on the need of the print!"
 
 ## Folder hygiene (2026-06-04) — for QA, look ONLY in FINAL/
 
-Cleaned up per John ("clean up after yourself"). The single place to QA outputs is **`FINAL/`**:
-- `1_FULLBODY_render.png`, `2_BUST_render.png`, `3_4COLOR_render.png` — the QA images (3 angles each).
-- `1_FULLBODY_color.glb`, `2_BUST_color.glb` — full-color models. `*_printable.stl` — watertight geometry.
-- `figurine_4material.3mf` + `material1..4.stl` — the 4-region print deliverable.
+Cleaned up per John ("clean up after yourself"). **`FINAL/` has two subfolders so QA isn't confused
+with output files:**
+- **`FINAL/renders/`** — the 3 images to QA by eye: `1_FULLBODY_render.png`, `2_BUST_render.png`,
+  `3_4COLOR_render.png` (3 angles each).
+- **`FINAL/print_files/`** — the actual output files (not QA'd by eye): `*_color.glb` full-color models,
+  `*_printable.stl` watertight geometry, `figurine_4material.3mf` + `material1..4.stl` 4-region print set.
 Inputs live in `candidates/` (the 6 fw.zip refs) + `samples/_montage.png`. Everything else was scratch.
 DELETED the `_qa/` scratch folder (intermediate + FAILED Hunyuan re-texture renders — the 06-04 Hunyuan
 per-vertex color came out splotchy/magenta, WORSE than the clean 06-03 deliverable) and the superseded
