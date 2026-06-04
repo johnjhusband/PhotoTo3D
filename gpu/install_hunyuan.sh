@@ -16,6 +16,9 @@ set -uo pipefail
 cd /workspace/Hunyuan3D-2.1
 log(){ echo "[hy $(date -u +%H:%M:%S)] $*"; }
 
+# bpy (Blender as a module, used for GLB export) needs X11/render libs even headless.
+apt-get install -y --no-install-recommends libxrender1 libxi6 libxxf86vm1 libxfixes3 libxkbcommon0 libgl1 libsm6 libice6 >/dev/null 2>&1 || true
+
 log "venv inheriting conda torch (no torch re-download, isolated from TRELLIS deps)"
 /opt/conda/bin/python -m venv --system-site-packages /workspace/hyvenv
 source /workspace/hyvenv/bin/activate

@@ -21,6 +21,10 @@ HY_ROOT = os.environ.get("HY_ROOT", "/workspace/Hunyuan3D-2.1")
 sys.path.insert(0, HY_ROOT)
 sys.path.insert(0, os.path.join(HY_ROOT, "hy3dpaint"))
 
+# Import torch FIRST so its libs (libc10.so) are loaded before the custom_rasterizer CUDA extension
+# (built against torch) tries to dlopen them — otherwise ImportError: libc10.so not found.
+import torch  # noqa: F401
+
 # Patch snapshot_download BEFORE importing the pipeline (which binds it at import time).
 import huggingface_hub
 _orig_snapshot = huggingface_hub.snapshot_download
