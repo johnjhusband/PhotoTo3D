@@ -22,9 +22,11 @@ source /workspace/hyvenv/bin/activate
 python -c 'import torch;print("torch",torch.__version__,"cuda",torch.cuda.is_available())'
 pip install -q --upgrade pip
 
-log "requirements (strip Tencent/Aliyun mirror lines — slow from US — and torch pins — inherited)"
-grep -v 'mirrors\.' requirements.txt | grep -viE '^torch|^torchvision|^torchaudio' > /tmp/hyreq.txt
-pip install -r /tmp/hyreq.txt
+log "requirements (strip CN mirrors + torch pins; bpy==4.0 is unavailable on py3.11 -> 4.2.0)"
+grep -v 'mirrors\.' requirements.txt \
+  | grep -viE '^torch|^torchvision|^torchaudio' \
+  | sed 's/^bpy==4\.0$/bpy==4.2.0/' > /tmp/hyreq.txt
+pip install -r /tmp/hyreq.txt   # one bad pin fails the WHOLE resolve, so this must succeed cleanly
 
 export CUDA_HOME=/usr/local/cuda PATH="/usr/local/cuda/bin:$PATH" TORCH_CUDA_ARCH_LIST=8.6
 log "build custom_rasterizer (--no-build-isolation: its setup.py imports torch)"
