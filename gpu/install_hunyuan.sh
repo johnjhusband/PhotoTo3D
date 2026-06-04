@@ -37,6 +37,10 @@ log "build custom_rasterizer (--no-build-isolation: its setup.py imports torch)"
 log "build DifferentiableRenderer"
 ( cd hy3dpaint/DifferentiableRenderer && bash compile_mesh_painter.sh )
 
+# basicsr 1.4.2 imports torchvision.transforms.functional_tensor, removed in torchvision 0.17+.
+BS=$(/workspace/hyvenv/bin/python -c "import basicsr,os;print(os.path.dirname(basicsr.__file__))" 2>/dev/null)
+[ -n "$BS" ] && sed -i "s/from torchvision.transforms.functional_tensor import/from torchvision.transforms.functional import/" "$BS/data/degradations.py" || true
+
 log "place RealESRGAN weight where the pipeline expects it"
 mkdir -p hy3dpaint/ckpt && cp /workspace/_hunyuan/weights/RealESRGAN_x4plus.pth hy3dpaint/ckpt/
 
