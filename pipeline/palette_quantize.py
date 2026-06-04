@@ -23,7 +23,11 @@ import numpy as np
 import trimesh
 from sklearn.cluster import KMeans
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "gpu"))
+# export_color3mf lives in gpu/ in the repo, but may sit flat alongside this on the box — try both.
+_here = os.path.dirname(os.path.abspath(__file__))
+for _p in (_here, os.path.join(_here, "..", "gpu"), "/workspace", "/workspace/gpu"):
+    if os.path.isdir(_p):
+        sys.path.insert(0, _p)
 
 
 def srgb_to_lab(rgb):

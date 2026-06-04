@@ -60,21 +60,30 @@ def main():
     pipe = TrellisImageTo3DPipeline.from_pretrained("JeffreyXiang/TRELLIS-image-large")
     pipe.cuda()
 
-    # quality settings (override via env STEPS / TEX). Higher steps = crisper geometry/texture.
+    # quality settings (override via env). Higher steps = crisper geometry/texture.
+    # SS_CFG raised 7.5->9 (research 2026): higher sparse-structure guidance forces TRELLIS to COMMIT
+    # to the face/structure in the image — the main lever against the blank-mask face. slat stays 3.0
+    # (raising it adds surface artifacts). PREPROCESS=0 when feeding an already-cleaned reference
+    # (our isnet-anime bg removal on gray) so TRELLIS does NOT re-run its photo-trained rembg, which
+    # is what ate the pale anime face.
     steps = int(os.environ.get("STEPS", "30"))
-    ss = {"steps": steps, "cfg_strength": 7.5}
-    slat = {"steps": steps, "cfg_strength": 3.0}
+    ss_cfg = float(os.environ.get("SS_CFG", "9.0"))
+    slat_cfg = float(os.environ.get("SLAT_CFG", "3.0"))
+    preprocess = os.environ.get("PREPROCESS", "1") != "0"
+    ss = {"steps": steps, "cfg_strength": ss_cfg}
+    slat = {"steps": steps, "cfg_strength": slat_cfg}
+    print(f"[trellis] steps={steps} ss_cfg={ss_cfg} slat_cfg={slat_cfg} preprocess_image={preprocess}")
 
     if len(images) == 1:
         print(f"[trellis] single-image run (seed={seed})")
         outputs = pipe.run(images[0], seed=seed, formats=["gaussian", "mesh"],
-                           preprocess_image=True,
+                           preprocess_image=preprocess,
                            sparse_structure_sampler_params=ss, slat_sampler_params=slat)
     else:
         print(f"[trellis] multi-image run over {len(images)} images (seed={seed})")
         # 'stochastic' multi-image mode conditions on all views jointly
         outputs = pipe.run_multi_image(images, seed=seed, formats=["gaussian", "mesh"],
-                                       preprocess_image=True, mode="stochastic",
+                                       preprocess_image=preprocess, mode="stochastic",
                                        sparse_structure_sampler_params=ss, slat_sampler_params=slat)
 
     # turntable preview to eyeball before printing
@@ -88,8 +97,12 @@ def main():
 
     print("[trellis] exporting textured GLB")
     tex = int(os.environ.get("TEX", "2048"))      # higher texture res = crisper color detail
+    # NOTE on convention: native TRELLIS `simplify` = fraction of faces to REMOVE (0.9 = remove 90%,
+    # aggressive — collapses small features like the face). We default LOW (0.5) to PRESERVE facial
+    # geometry; the printable decimation happens later in repair_mesh, so we don't over-simplify here.
+    simp = float(os.environ.get("SIMPLIFY", "0.5"))
     glb = postprocessing_utils.to_glb(outputs["gaussian"][0], outputs["mesh"][0],
-                                      simplify=0.9, texture_size=tex)
+                                      simplify=simp, texture_size=tex)
     glb_path = os.path.join(outdir, "model.glb")
     glb.export(glb_path)
 
