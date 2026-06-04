@@ -82,6 +82,21 @@ def main():
     if isinstance(m, trimesh.Scene):
         m = m.to_geometry()
     vc = vertex_colors_from_texture(m)
+    # COLOR PRE-SMOOTHING (the speckle fix): blur per-vertex colors over the mesh surface BEFORE
+    # clustering so the texture's patchy artifacts average into coherent zones → contiguous print
+    # regions instead of speckle. Far more effective than post-quantization label smoothing alone.
+    csm = int(os.environ.get("COLORSMOOTH", "12"))
+    if csm > 0:
+        from scipy.sparse import coo_matrix
+        e = m.edges_unique
+        nv = len(m.vertices)
+        A = coo_matrix((np.ones(len(e) * 2),
+                        (np.concatenate([e[:, 0], e[:, 1]]),
+                         np.concatenate([e[:, 1], e[:, 0]]))), shape=(nv, nv)).tocsr()
+        deg = np.asarray(A.sum(1)).ravel(); deg[deg == 0] = 1
+        for _ in range(csm):
+            vc = 0.5 * vc + 0.5 * (A.dot(vc) / deg[:, None])
+        print(f"[palette] color pre-smoothing: {csm} Laplacian iters")
     # LWEIGHT downweights Lab lightness before clustering so lit+shadowed parts of the SAME material
     # (TRELLIS bakes lighting into the texture) cluster together by HUE/CHROMA → regions = materials,
     # not light/shadow. 1.0 = standard Lab; ~0.3 = mostly chroma. Env LWEIGHT (default 0.35).
