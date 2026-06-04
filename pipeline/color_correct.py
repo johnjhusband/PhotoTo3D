@@ -22,7 +22,9 @@ def _args(argv):
     if len(argv) < 3:
         sys.exit("usage: color_correct.py <colored_mesh> <out.glb> [--sat 1.6] [--gamma 0.8] [--lo 2] [--hi 98]")
     inp, out = argv[1], argv[2]
-    o = {"sat": 1.6, "gamma": 0.8, "lo": 2.0, "hi": 98.0, "wb": 1.0}
+    # gamma 0.5 ≈ linear→sRGB: TRELLIS bakes the texture in LINEAR space (median pixel ~23/255), so it
+    # exports near-black; a ~0.45–0.5 gamma restores natural brightness. Verified on E1 (mean 30→94).
+    o = {"sat": 1.6, "gamma": 0.5, "lo": 0.5, "hi": 99.5, "wb": 0.3}
     i = 3
     while i < len(argv):
         k = argv[i].lstrip("-")

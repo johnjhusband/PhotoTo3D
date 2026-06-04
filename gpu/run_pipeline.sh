@@ -84,7 +84,7 @@ QSRC="$OUT/printable_color.glb"
 if [ "${CC:-0}" = "1" ] && [ -f "$QSRC" ]; then
   echo "[pipeline] gentle color-correct before quantize"
   python "$HERE/../pipeline/color_correct.py" "$QSRC" "$OUT/printable_cc.glb" \
-    --wb "${CC_WB:-0.4}" --sat "${CC_SAT:-1.4}" --gamma "${CC_GAMMA:-0.9}" --lo 1 --hi 99 \
+    --wb "${CC_WB:-0.3}" --sat "${CC_SAT:-1.6}" --gamma "${CC_GAMMA:-0.5}" --lo 0.5 --hi 99.5 \
     && QSRC="$OUT/printable_cc.glb" || echo "[pipeline] color-correct failed; using raw color"
 fi
 

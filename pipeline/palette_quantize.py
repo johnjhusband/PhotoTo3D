@@ -82,11 +82,16 @@ def main():
     if isinstance(m, trimesh.Scene):
         m = m.to_geometry()
     vc = vertex_colors_from_texture(m)
-    print(f"[palette] {len(vc)} vertices -> {N} flat color regions (k-means in CIE-Lab)")
+    # LWEIGHT downweights Lab lightness before clustering so lit+shadowed parts of the SAME material
+    # (TRELLIS bakes lighting into the texture) cluster together by HUE/CHROMA → regions = materials,
+    # not light/shadow. 1.0 = standard Lab; ~0.3 = mostly chroma. Env LWEIGHT (default 0.35).
+    lw = float(os.environ.get("LWEIGHT", "0.35"))
+    print(f"[palette] {len(vc)} vertices -> {N} flat regions (Lab k-means, L-weight={lw})")
 
-    # cluster in Lab; representative color = MEDIAN rgb of each cluster (robust to outliers)
+    # cluster in Lab with lightness downweighted; representative color = MEDIAN rgb (robust)
     lab = srgb_to_lab(vc)
-    km = KMeans(n_clusters=N, n_init=10, random_state=0).fit(lab)
+    labw = lab.copy(); labw[:, 0] *= lw
+    km = KMeans(n_clusters=N, n_init=10, random_state=0).fit(labw)
     labels = km.labels_
     centroids = np.array([np.median(vc[labels == i], axis=0) if np.any(labels == i)
                           else [128, 128, 128] for i in range(N)])
