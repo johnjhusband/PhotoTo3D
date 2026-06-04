@@ -1,19 +1,71 @@
 #!/usr/bin/env python3
-"""palette_quantize.py — Stage 4: reduce a colored mesh to N flat colors for an N-spool printer.
+"""palette_quantize.py — Stage 4: reduce a colored mesh to N FLAT color regions for an N-spool printer.
 
-A multi-color FDM printer can only lay down its N loaded filaments. TRELLIS output has a continuous
-texture (hundreds of shades), so we cluster the colors into exactly N groups (k-means) and snap every
-surface to its group's color. Output is both a single N-color mesh (for viewing) and one STL per color
-(for assigning to filaments / multi-material slicing).
+A multi-color FDM printer lays down only its N loaded filaments. TRELLIS output has a continuous
+texture (hundreds of shades), so we cluster into exactly N groups and snap every surface to its group
+color. The N filament colors are assigned in the slicer at print time — only the N REGIONS live here.
+
+Fixes over the naive version (research 2026):
+  - Cluster in **CIE-Lab** (perceptually uniform), not RGB — clean anime-palette separation.
+  - Take color from the **albedo texture** sampled at vertex UVs, not trimesh `to_color()` (which
+    mishandles multi-map PBR and muddies the palette).
+  - Emit **flat per-face** regions by EXPLODING vertices (each triangle gets its own 3 vertices, all
+    one palette color) → the color 3MF has NO barycentric bleed at region boundaries (the splotch fix).
+  - Warn if two palette colors are within ΔE < 25 (visually indistinct → effectively fewer regions).
 
 Usage: palette_quantize.py <colored_mesh> <out_base> [N]
-Outputs: <base>_<N>color.glb/.ply  and  <base>_part<i>_<hex>.stl (one per color)
-Run with a python that has trimesh + scipy (e.g. /opt/conda/bin/python).
+Outputs: <base>_<N>color.glb/.ply (flat per-face), <base>_<N>color.3mf (clean N-region print file),
+         <base>_part<i>_<hex>.stl (one per color, for separate-object multi-material loading)
+Run with a python that has trimesh + scikit-learn + numpy.
 """
-import sys
+import os, sys
 import numpy as np
 import trimesh
-from scipy.cluster.vq import kmeans2
+from sklearn.cluster import KMeans
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "gpu"))
+
+
+def srgb_to_lab(rgb):
+    """rgb uint8/float 0..255 (Nx3) -> CIE-Lab (Nx3), D65."""
+    c = np.asarray(rgb, float) / 255.0
+    c = np.where(c > 0.04045, ((c + 0.055) / 1.055) ** 2.4, c / 12.92)
+    M = np.array([[0.4124, 0.3576, 0.1805],
+                  [0.2126, 0.7152, 0.0722],
+                  [0.0193, 0.1192, 0.9505]])
+    xyz = c @ M.T / np.array([0.95047, 1.0, 1.08883])
+    f = np.where(xyz > 0.008856, np.cbrt(xyz), 7.787 * xyz + 16.0 / 116.0)
+    return np.stack([116 * f[:, 1] - 16,
+                     500 * (f[:, 0] - f[:, 1]),
+                     200 * (f[:, 1] - f[:, 2])], 1)
+
+
+def vertex_colors_from_texture(m):
+    """Per-vertex RGB by sampling the albedo texture at each vertex UV; fall back to vertex colors.
+    trimesh to_color() mishandles multi-map PBR (muddies the palette), so we sample directly."""
+    vis = getattr(m, "visual", None)
+    try:
+        if isinstance(vis, trimesh.visual.TextureVisuals) and vis.uv is not None and vis.material is not None:
+            mat = vis.material
+            img = getattr(mat, "baseColorTexture", None) or getattr(mat, "image", None)
+            if img is not None:
+                tex = np.asarray(img.convert("RGB"))
+                h, w = tex.shape[:2]
+                uv = np.asarray(vis.uv, float)
+                px = np.clip((uv[:, 0] % 1.0 * (w - 1)).astype(int), 0, w - 1)
+                py = np.clip(((1.0 - uv[:, 1] % 1.0) * (h - 1)).astype(int), 0, h - 1)
+                rgb = tex[py, px]
+                if rgb.shape[0] == len(m.vertices):
+                    return rgb.astype(float)
+    except Exception as e:
+        print(f"[palette] texture sampling failed ({e}); falling back")
+    try:
+        vc = np.asarray(vis.to_color().vertex_colors)[:, :3].astype(float)
+        if vc.shape[0] == len(m.vertices):
+            return vc
+    except Exception:
+        pass
+    return np.asarray(vis.vertex_colors)[:, :3].astype(float)
 
 
 def main():
@@ -23,40 +75,69 @@ def main():
     N = int(sys.argv[3]) if len(sys.argv) > 3 else 4
 
     m = trimesh.load(inp, process=False, force="mesh")
-    try:
-        vc = np.asarray(m.visual.to_color().vertex_colors)[:, :3].astype(float)
-    except Exception:
-        vc = np.asarray(m.visual.vertex_colors)[:, :3].astype(float)
-    print(f"[palette] {len(vc)} vertices -> {N} colors")
+    if isinstance(m, trimesh.Scene):
+        m = m.to_geometry()
+    vc = vertex_colors_from_texture(m)
+    print(f"[palette] {len(vc)} vertices -> {N} flat color regions (k-means in CIE-Lab)")
 
-    np.random.seed(0)
-    centroids, labels = kmeans2(vc, N, minit="++", missing="warn")
+    # cluster in Lab; representative color = MEDIAN rgb of each cluster (robust to outliers)
+    lab = srgb_to_lab(vc)
+    km = KMeans(n_clusters=N, n_init=10, random_state=0).fit(lab)
+    labels = km.labels_
+    centroids = np.array([np.median(vc[labels == i], axis=0) if np.any(labels == i)
+                          else [128, 128, 128] for i in range(N)])
     centroids = np.clip(np.round(centroids), 0, 255).astype(np.uint8)
     counts = np.bincount(labels, minlength=N)
-    palette = [(tuple(int(x) for x in centroids[i]), int(counts[i])) for i in range(N)]
-    print(f"[palette] colors (rgb, #verts): {palette}")
+    print(f"[palette] regions (rgb, #verts): "
+          f"{[(tuple(int(x) for x in centroids[i]), int(counts[i])) for i in range(N)]}")
 
-    # single N-color mesh
-    qcolors = np.full((len(vc), 4), 255, np.uint8)
-    qcolors[:, :3] = centroids[labels]
-    mq = m.copy()
-    mq.visual.vertex_colors = qcolors
-    mq.export(f"{base}_{N}color.glb")
-    mq.export(f"{base}_{N}color.ply")
-    print(f"[palette] wrote {base}_{N}color.glb/.ply")
+    # ΔE distinctness check (Lab euclidean ~= ΔE76)
+    clab = srgb_to_lab(centroids)
+    for i in range(N):
+        for j in range(i + 1, N):
+            de = float(np.linalg.norm(clab[i] - clab[j]))
+            if de < 25:
+                print(f"[palette] WARN: regions {i} (#{'%02x%02x%02x' % tuple(centroids[i])}) and "
+                      f"{j} (#{'%02x%02x%02x' % tuple(centroids[j])}) are ΔE={de:.1f} (<25) — "
+                      f"visually similar; effective regions < {N}")
 
-    # split into one STL per color (face -> majority vertex color)
-    faces = m.faces
+    # per-FACE label = majority vote of the face's 3 vertices
+    faces = np.asarray(m.faces)
     flab = np.array([np.bincount(labels[f], minlength=N).argmax() for f in faces])
+
+    # EXPLODE: each triangle gets its own 3 vertices, all one flat palette color -> no bleed
+    tri_verts = np.asarray(m.vertices)[faces].reshape(-1, 3)
+    tri_faces = np.arange(len(tri_verts)).reshape(-1, 3)
+    face_rgb = centroids[flab]                              # Mx3
+    corner_rgba = np.empty((len(tri_verts), 4), np.uint8)
+    corner_rgba[:, :3] = np.repeat(face_rgb, 3, axis=0)
+    corner_rgba[:, 3] = 255
+
+    flat = trimesh.Trimesh(vertices=tri_verts, faces=tri_faces, process=False)
+    flat.visual.vertex_colors = corner_rgba
+    flat.export(f"{base}_{N}color.glb")
+    flat.export(f"{base}_{N}color.ply")
+    print(f"[palette] wrote flat per-face {base}_{N}color.glb/.ply")
+
+    # clean N-region color 3MF (flat corners -> no barycentric interpolation)
+    try:
+        from export_color3mf import export_color_3mf
+        n = export_color_3mf(tri_verts.astype(np.float64), tri_faces.astype(np.int64),
+                             corner_rgba, f"{base}_{N}color.3mf")
+        print(f"[palette] wrote {base}_{N}color.3mf ({n} distinct colors)")
+    except Exception as e:
+        print(f"[palette] color-3MF skipped ({e})")
+
+    # one STL per color region (shared-vertex, for separate-object multi-material loading)
     for i in range(N):
         fi = faces[flab == i]
         if len(fi) == 0:
             continue
-        part = trimesh.Trimesh(vertices=m.vertices.copy(), faces=fi, process=True)
+        part = trimesh.Trimesh(vertices=np.asarray(m.vertices).copy(), faces=fi, process=True)
         part.remove_unreferenced_vertices()
         hexc = "%02x%02x%02x" % tuple(int(x) for x in centroids[i])
         part.export(f"{base}_part{i}_{hexc}.stl")
-        print(f"[palette] part {i} color #{hexc}: {len(fi)} faces -> {base}_part{i}_{hexc}.stl")
+        print(f"[palette] region {i} #{hexc}: {len(fi)} faces -> {base}_part{i}_{hexc}.stl")
 
 
 if __name__ == "__main__":
