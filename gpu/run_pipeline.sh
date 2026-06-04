@@ -36,8 +36,8 @@ run_trellis() {  # <single_image>
 # photo-trained rembg never eats the pale anime face. MODE=bust (default) uses the face-filling crop;
 # MODE=full uses the whole subject. Sets PREPROCESS=0 so TRELLIS keeps our cleaned ref as-is.
 if [ "${PREP:-0}" = "1" ] && [ "${#IMGS[@]}" -eq 1 ]; then
-  echo "[pipeline] PREP: preprocess_reference (isnet-anime, gray, ${MODE:-bust} crop)"
-  python "$HERE/../pipeline/preprocess_reference.py" "${IMGS[0]}" "$OUT/_prep" --bg gray
+  echo "[pipeline] PREP: preprocess_reference (isnet-anime, gray, ${MODE:-bust} crop, top-crop=${TOPCROP:-0})"
+  python "$HERE/../pipeline/preprocess_reference.py" "${IMGS[0]}" "$OUT/_prep" --bg gray --top-crop "${TOPCROP:-0}"
   case "${MODE:-bust}" in
     full) IMGS=("$OUT/_prep/ref_full.png") ;;
     *)    IMGS=("$OUT/_prep/ref_bust.png") ;;

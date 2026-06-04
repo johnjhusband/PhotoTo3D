@@ -158,7 +158,13 @@ Single-image path is unaffected and is the working deliverable.
 
 ## Cost note
 
-Instance **39215079 STOPPED 2026-06-04** (`vastai stop instance 39215079`) — compute billing halted,
+**NEW BOX 39505355 RENTED 2026-06-04** (John said "rent" after old box's slot wouldn't free): RTX 3090,
+California US (chosen US to dodge the CN-firewall HF/GitHub stalls of the old box), $0.203/hr, 120GB disk,
+image pytorch/pytorch:2.4.1-cuda12.1-cudnn9-devel. SSH `ssh9.vast.ai:25354` key `~/.ssh/cto-deploy`.
+Fresh — needs the install scripts run (install_trellis.sh first for fastest E1, then install_trellis2.sh
+for the geometry upgrade). Destroy or stop when the iterate loop reaches an acceptable 4-color print.
+
+OLD instance **39215079 STOPPED 2026-06-04** (`vastai stop instance 39215079`) — compute billing halted,
 disk preserved, restart on demand (`vastai start instance 39215079`) AS LONG AS that GPU slot is still
 free. John's call: stop (not destroy) until he likes the images; destroy+Docker-image is NOT the path
 yet. Small storage fee continues while stopped. Use `vastai show instances-v1` (the old `show instances`
