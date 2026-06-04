@@ -26,25 +26,25 @@ Nothing downstream is decided without these.
 (e.g. "remove the umbrella, give a clean full-body front view"). *(I drive this; John approves the
 chosen/edited reference.)*
 
-**2. 3D generation — TRELLIS** — reference image(s) → textured mesh (GLB). Render a turntable
-preview. *(Fully automated on the GPU box.)*
+**2. 3D generation — TRELLIS** — reference image(s) → textured mesh (GLB). `gpu/run_trellis.py`
+(STEPS=30, TEX=2048 for quality). *(Automated on the GPU box.)*
 
-**3. Geometry for printing — mesh repair (`repair_mesh.py`)** — generative meshes come out as 1000+
-disconnected shells (hair/body/clothing), NOT a watertight solid, so this stage is mandatory. It
-**voxel-remeshes all shells into one solid** (shrink-wrap), smooths the voxel stair-stepping (Taubin),
-decimates to a printable triangle budget, then runs pymeshfix LAST as the watertight guarantee. (Order
-matters: decimating after pymeshfix re-opens the surface.) Still to add: scale to build volume, add a
-base, hollow, min-wall-thickness check, split if over build volume. *(Automated. Artistic geometry
-tweaks — e.g. lengthen the cloak — are a script→render→look loop, or manual Blender. Note: headless
-geometry rendering needs a display stack that isn't installed; use TRELLIS's turntable preview.)*
+**2.5. Color re-texture — Hunyuan3D-Paint (optional, `HY_PAINT=1`)** — TRELLIS's baked texture is
+dark/muddy (lighting baked in). Hunyuan-Paint re-textures the SAME geometry (`use_remesh=False`) with
+delit, light/shadow-free PBR albedo → bright, accurate color. `gpu/run_hunyuan_paint.py`. Keeps TRELLIS
+shape (research refuted Hunyuan's geometry being better; only its texture wins). *(Automated; ~21GB VRAM.)*
 
-**4. Color resolution — palette-to-N** — TRELLIS outputs a continuous texture (hundreds of shades);
-a multi-color FDM printer can't do that, so we **must** reduce it. Quantize surface colors to
-**exactly N = spool count**, snapped to the real loaded filament colors. When the design wants more
-distinct regions than spools, the LLM arbitrates the merges (or John specifies: "keep hair+cloak
-distinct, merge gloves into sleeves"), then renders the N-color preview for approval. Bake the N
-regions into the 3MF as per-region materials. If monochrome printer: drop color, output a clean STL
-as a paint base. *(I drive; John approves the palette preview.)*
+**3. Geometry for printing — `repair_mesh.py` (CGAL alpha-wrap)** — generative meshes are 1000+
+disconnected shells, NOT a watertight solid. We wrap them with **CGAL 3D Alpha Wrapping** (`gpu/alpha_wrap.cpp`):
+guaranteed watertight + manifold, and PRESERVES thin features (cape/scarf) that the old voxel shrink-wrap
+collapsed. Then keep the largest blob, decimate to a printable budget, transfer the original color onto
+the solid. Still to add: scale to build volume, base, hollow, min-wall-thickness, split if over volume.
+*(Automated. `REL_ALPHA` env tunes feature fineness.)*
+
+**4. Color output / palette-to-N** — deliverable is a **COLOR 3MF** (`gpu/export_color3mf.py`, lib3mf;
+trimesh can't write color; STL dropped — it's colorless). For an N-spool multi-material printer,
+`pipeline/palette_quantize.py` reduces the texture to N filament colors (k-means, snapped to the loaded
+colors) and emits per-color STLs. The full color 3MF goes to a slicer that maps regions to filaments.
 
 **5. Slicing — slicer → G-code** — load the 3MF/STL into a slicer (OrcaSlicer/PrusaSlicer/Bambu/Cura)
 with the printer's profile; set infill, supports, layer height; multi-material color mapping becomes
