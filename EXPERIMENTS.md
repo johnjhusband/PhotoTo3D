@@ -85,6 +85,19 @@ Fix: never let the 3D model invent. Complete the reference in **2D first**, then
   locate the .cpp in gpu/) — re-running repair (alpha-wrap, RAM-light) → color-correct → 4-color now.
   Next judge: the 4-color print render; then tune umbrella/color, consider E4 (TRELLIS.2) for geometry.
 
+- 2026-06-04 **E1 fully judged.** After fixing repair (alpha_wrap build path; removed a 54GB/3min
+  `m.split()` log hang): alpha-wrap repair → watertight 113k-face solid, fast. Color: the TRELLIS
+  baseColorTexture is LINEAR (median 23/255 → near-black); **gamma 0.5 restores it** (mean 30→94,
+  verified). 4-color: baked light/shadow made regions follow lighting (camo) → **chroma-weighted Lab
+  k-means (LWEIGHT 0.3)** makes regions follow MATERIALS (blue scarf / rust hair / grey body). Both
+  baked into defaults. VERDICT: face FIXED & recognizable, color recoverable, regions material-based —
+  huge jump from faceless black blobs, but NOT yet acceptable: baked-highlight white blotches, the 4
+  colors are muddy (subject is mostly brown/grey + 1 blue), umbrella remnant remains.
+- 2026-06-04 **E3 (delighting) RUNNING:** `bootstrap_hunyuan.sh` installs Hunyuan3D-Paint + re-textures
+  model.glb with delit (shadow-free) albedo → expect clean material color, no white blotches, 4 cleaner
+  regions. Then repair + 4-color on the delit mesh. After: umbrella SDXL inpaint, and E4 (TRELLIS.2) if
+  geometry still soft.
+
 ## Acceptance (when do we stop)
 A rendered **4-color printable** where: the face has real features (eyes/mouth), color is bright and
 matches the reference palette with 4 clean regions (no splotch), geometry is crisp, and nothing is
