@@ -76,6 +76,15 @@ Fix: never let the 3D model invent. Complete the reference in **2D first**, then
   up: E1 (preprocessed bust, top-crop, SS_CFG 9, repair, 4-color, gentle CC), judge; then E4 (TRELLIS.2)
   if geometry still soft.
 
+- 2026-06-04 **E1 RESULT (new box 39505355): FACE FIXED.** Preprocessed bust (isnet-anime/gray/top-crop)
+  → TRELLIS preprocess_image=False, ss_cfg=9, 30 steps → `model.glb` (330k v / 538k f). Front render:
+  the face now has real features — purple eye, eye-band, mouth/tongue, peace-sign hand — matching the
+  reference. The #1 defect (blank mask) is SOLVED by the preprocessing fix. Remaining: still somewhat
+  dark; an umbrella canopy remnant survives top-crop=0.18 (raise it / inpaint); repair step OOM-killed
+  on the voxel fallback because alpha_wrap.cpp build path was wrong (FIXED install_alpha_wrap.sh to
+  locate the .cpp in gpu/) — re-running repair (alpha-wrap, RAM-light) → color-correct → 4-color now.
+  Next judge: the 4-color print render; then tune umbrella/color, consider E4 (TRELLIS.2) for geometry.
+
 ## Acceptance (when do we stop)
 A rendered **4-color printable** where: the face has real features (eyes/mouth), color is bright and
 matches the reference palette with 4 clean regions (no splotch), geometry is crisp, and nothing is

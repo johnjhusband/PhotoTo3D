@@ -3,6 +3,9 @@
 # CGAL's apt package (5.4 on Ubuntu 24.04) is too old for alpha_wrap_3 (needs >=5.5), and CGAL is
 # header-only, so we just fetch a newer release's headers and compile alpha_wrap.cpp against them.
 set -e
+HERE="$(cd "$(dirname "$0")" && pwd)"      # alpha_wrap.cpp sits next to this script (gpu/)
+CPP="$HERE/alpha_wrap.cpp"
+[ -f "$CPP" ] || CPP="/workspace/alpha_wrap.cpp"   # fallback to flat layout
 cd /workspace
 export DEBIAN_FRONTEND=noninteractive
 apt-get install -y --no-install-recommends g++ libgmp-dev libmpfr-dev libboost-dev >/dev/null 2>&1 || true
@@ -15,5 +18,5 @@ if [ ! -f CGAL-5.6.1/include/CGAL/alpha_wrap_3.h ]; then
   tar xf CGAL-5.6.1.tar.xz
 fi
 
-g++ -O3 -DNDEBUG -DCGAL_NDEBUG -I/workspace/CGAL-5.6.1/include alpha_wrap.cpp -o alpha_wrap -lgmp -lmpfr
+g++ -O3 -DNDEBUG -DCGAL_NDEBUG -I/workspace/CGAL-5.6.1/include "$CPP" -o /workspace/alpha_wrap -lgmp -lmpfr
 echo "alpha_wrap built:"; ls -la /workspace/alpha_wrap
