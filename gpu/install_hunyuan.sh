@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# install_hunyuan.sh — install Hunyuan3D-Paint (texture-only re-texturing) on the GPU box.
+# We use it to re-texture TRELLIS geometry with bright, delit PBR albedo (fixes dark/muddy color).
+#
+# Prereqs already on the box: the pytorch-cuda-devel conda env (torch 2.4.1+cu121), CUDA toolkit at
+# /usr/local/cuda. We build a SEPARATE venv that INHERITS that torch (--system-site-packages) so we
+# don't re-download torch and don't disturb the TRELLIS/SDXL conda env (Hunyuan pins different
+# numpy/open3d/diffusers versions).
+#
+# Weights are downloaded SEPARATELY by curl-stream (the box stalls on HF auto-download). You need:
+#   - tencent/Hunyuan3D-2.1  ->  hunyuan3d-paintpbr-v2-1/*   (~7GB)  -> /workspace/_hunyuan/weights/
+#   - facebook/dinov2-giant                                  (~4.5GB) -> /workspace/_hunyuan/dinov2-giant/
+#   - RealESRGAN_x4plus.pth (GitHub release)                          -> /workspace/_hunyuan/weights/
+# (enumerate file lists via the HF api/models JSON, curl -L -C - each file.)
+set -uo pipefail
+cd /workspace/Hunyuan3D-2.1
+log(){ echo "[hy $(date -u +%H:%M:%S)] $*"; }
+
+log "venv inheriting conda torch (no torch re-download, isolated from TRELLIS deps)"
+/opt/conda/bin/python -m venv --system-site-packages /workspace/hyvenv
+source /workspace/hyvenv/bin/activate
+python -c 'import torch;print("torch",torch.__version__,"cuda",torch.cuda.is_available())'
+pip install -q --upgrade pip
+
+log "requirements (strip Tencent/Aliyun mirror lines — slow from US — and torch pins — inherited)"
+grep -v 'mirrors\.' requirements.txt | grep -viE '^torch|^torchvision|^torchaudio' > /tmp/hyreq.txt
+pip install -r /tmp/hyreq.txt
+
+export CUDA_HOME=/usr/local/cuda PATH="/usr/local/cuda/bin:$PATH" TORCH_CUDA_ARCH_LIST=8.6
+log "build custom_rasterizer (--no-build-isolation: its setup.py imports torch)"
+( cd hy3dpaint/custom_rasterizer && pip install -e . --no-build-isolation )
+log "build DifferentiableRenderer"
+( cd hy3dpaint/DifferentiableRenderer && bash compile_mesh_painter.sh )
+
+log "place RealESRGAN weight where the pipeline expects it"
+mkdir -p hy3dpaint/ckpt && cp /workspace/_hunyuan/weights/RealESRGAN_x4plus.pth hy3dpaint/ckpt/
+
+log "HY_INSTALL_DONE"
