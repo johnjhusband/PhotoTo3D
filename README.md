@@ -1,5 +1,16 @@
 # PhotoTo3D
 
+**Current result + how to reproduce it: see [REPRODUCE.md](REPRODUCE.md).**
+It documents the working end-to-end pipeline (single image → clean A-pose 2D ref → Hunyuan3D-2.1 shape →
+delit color → watertight repair → 4 flat print regions → scaled STL/3MF). Live status in STATE.md, the
+full experiment log in EXPERIMENTS.md, and the math/rationale in RESEARCH_RENDERING_MATH.md.
+
+---
+
+_(Older overview below — predates the A-pose/Hunyuan pipeline.)_
+
+# PhotoTo3D
+
 Turn 2D images into 3D-printable mesh files (STL / 3MF), using only open-source software.
 An LLM agent orchestrates the pipeline; disposable rented GPU compute runs the heavy models.
 **No paid 3D-generation service** — the only costs are raw infrastructure (hourly GPU) and optional LLM API tokens.
