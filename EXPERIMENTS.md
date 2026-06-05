@@ -157,3 +157,10 @@ obviously invented. Judged by me each round against the reference; repeat until 
   output/errors); run direct or to a file. (4) local SDXL at /workspace/_sdxl/sdxl-base (offline) avoids
   re-download. (5) John is ON the Linux box — view models with `f3d <file.glb>` (no 3MF reader; .3mf via
   MeshLab).
+
+- 2026-06-05 **John review of the A-pose figurine — MORE WORK (see CHARACTER.md):**
+  (1) HAT MISSING — her signature wide conical straw hat is in 5 of 6 sources; I used only 1 (umbrella img)
+      and never looked at the rest. Fix: multi-image A-pose canonical (IP-Adapter on the hat sources) +
+      explicit hat prompt. (2) Not enough DETAIL for a 150mm print — push fidelity. (3) Right HAND
+      misshapen. (4) Snake-tongue detail noted (likely too fine to print). Box restart queued; regenerate
+      when up. Reproducibility runbook = REPRODUCE.md. Hook now has step 4 = update docs.
