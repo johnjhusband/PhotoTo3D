@@ -35,3 +35,16 @@ _dino/
 _qa/
 *.jpg
 FINAL/3D_QA_viewer.html
+
+# scratch/working dirs + model weights + heavy artifacts (never commit these)
+_hyshape_dl/
+_sdxl/
+_fb/
+_fb2/
+_e1/
+_prep/
+_qa/
+out_*/
+*.ckpt
+*.gif
+*.html

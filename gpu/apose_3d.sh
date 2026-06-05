@@ -11,8 +11,9 @@ log(){ echo "[apose3d $(date -u +%H:%M:%S)] $*"; }
 log "1) preprocess canonical (isnet-anime, gray)"
 python pipeline/preprocess_reference.py out_ap/canonical.png out_ap/_prep --bg gray 2>&1 | tail -3
 
-log "2) Hunyuan SHAPE (crisp geometry, A-pose)"
-/workspace/hyvenv/bin/python gpu/run_hunyuan_shape.py out_ap/_prep/ref_full.png out_ap/model.glb 2>&1 | tail -6
+log "2) Hunyuan SHAPE (crisp geometry, A-pose) — LOCAL weights (box HF is throttled; aria2c-fetched)"
+HY_SHAPE_MODEL="${HY_SHAPE_MODEL:-/workspace/_hunyuan/hy3d21}" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
+  /workspace/hyvenv/bin/python gpu/run_hunyuan_shape.py out_ap/_prep/ref_full.png out_ap/model.glb 2>&1 | tail -6
 [ -f out_ap/model.glb ] || { echo "SHAPE_FAILED"; exit 1; }
 
 log "3) Hunyuan PAINT (delit color)"

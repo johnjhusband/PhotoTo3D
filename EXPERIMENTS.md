@@ -142,3 +142,18 @@ obviously invented. Judged by me each round against the reference; repeat until 
   `figurine_fullcolor_lifelike.glb` (smooth natural colors). Next lever for MORE realism = the full
   UV-TEXTURED model (model_pbr, smoother than per-vertex) — needs a box restart; v2 UV-texture (G1) is
   the durable fix (per-vertex color is band-limited; RESEARCH_RENDERING_MATH.md).
+
+- 2026-06-05 **FORM FIX (the real college-grade lever): clean A-POSE reference.** John: bare geometry was
+  mid-high-school — blobby face, mitten hands, shard cape. ROOT CAUSE = the dramatic hand-on-face/flailing
+  pose. FIX: SDXL+IP-Adapter regenerate the character in a CLEAN CALM A-POSE (832x1216, scale 0.4, face
+  forward, arms relaxed, cape hanging) → Hunyuan-shape → form-preserving repair (finer alpha). RESULT:
+  clean standing figure, REAL face shape, defined hands at sides, proper proportions, cape flows (no
+  shards). Lifelike full-color = `figurine_apose_lifelike.glb`; 4-color = `figurine_apose_4color.glb`.
+  Remaining: face soft at full-body scale, slight dress-color drift. Best result of the session.
+- INFRA LESSONS (this box, vast.ai): (1) stop/restart is fragile — host "address already in use" port
+  conflict can permanently brick a stopped instance (box 39505355). (2) HF download is throttled to
+  ~1.3 KB/s per connection (hangs for hours) — **use aria2c -x16 -s16 (~138 MB/s)**, see
+  `fetch_hunyuan_shape_weights.sh`. (3) consolidate.py scripts must NOT pipe through `tail` (swallows
+  output/errors); run direct or to a file. (4) local SDXL at /workspace/_sdxl/sdxl-base (offline) avoids
+  re-download. (5) John is ON the Linux box — view models with `f3d <file.glb>` (no 3MF reader; .3mf via
+  MeshLab).
