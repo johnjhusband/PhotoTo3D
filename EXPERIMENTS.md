@@ -112,6 +112,14 @@ Fix: never let the 3D model invent. Complete the reference in **2D first**, then
   inpaint on the reference + a ~1hr full regen), geometry soft/lumpy (needs TRELLIS.2 = separate env),
   bust by design. Core deliverable (clean vivid 4-color figurine w/ real face) is achieved.
 
+- 2026-06-05 **FULL-BODY v2, cheapest path first** (John: cheapest option, judge, escalate if short).
+  `gpu/outpaint_fullbody.py` = SDXL-inpaint outpaint: keeps the waist-up pixels EXACTLY (identity free),
+  generates only the legs below, IP-Adapter (scale 0.7) keeps them on-model. Result judged GOOD enough:
+  upper body = exact original; legs = on-model dark leggings + bandage-wrap motif, standing. Minor: feet
+  near bottom edge, legs a bit dark, faint bg seam at waist. Proceeding to 3D (full pipeline on the
+  full-body ref: preprocess(full) → TRELLIS → Hunyuan delight → repair → color → 4-color). If 3D
+  legs/feet are bad → escalate to FLUX-Kontext / give more canvas room for feet. RUNNING.
+
 ## Acceptance (when do we stop)
 A rendered **4-color printable** where: the face has real features (eyes/mouth), color is bright and
 matches the reference palette with 4 clean regions (no splotch), geometry is crisp, and nothing is
