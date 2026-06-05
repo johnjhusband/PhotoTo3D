@@ -103,11 +103,31 @@ def main():
     lw = float(os.environ.get("LWEIGHT", "0.35"))
     print(f"[palette] {len(vc)} vertices -> {N} flat regions (Lab k-means, L-weight={lw})")
 
-    # cluster in Lab with lightness downweighted; representative color = MEDIAN rgb (robust)
+    # OVERCLUSTER then MERGE near-identical colors down to N. A character often has two near-identical
+    # DARK textures (e.g. a dark cape + a dark scarf-shadow) that plain k-means keeps as two of the N
+    # slots → the cape comes out as a brown/navy patchwork. Overclustering to N+EXTRA and greedily
+    # merging the closest centroids (in Lab) collapses those duplicates into ONE region → clean cape.
     lab = srgb_to_lab(vc)
     labw = lab.copy(); labw[:, 0] *= lw
-    km = KMeans(n_clusters=N, n_init=10, random_state=0).fit(labw)
-    labels = km.labels_
+    extra = int(os.environ.get("MERGE_EXTRA", "3"))
+    km = KMeans(n_clusters=N + extra, n_init=10, random_state=0).fit(labw)
+    klab = km.labels_
+    active = list(range(N + extra))
+    members = {i: [i] for i in active}
+    cents = {i: labw[klab == i].mean(0) if np.any(klab == i) else km.cluster_centers_[i] for i in active}
+    while len(active) > N:
+        best = None
+        for a in range(len(active)):
+            for b in range(a + 1, len(active)):
+                d = float(np.linalg.norm(cents[active[a]] - cents[active[b]]))
+                if best is None or d < best[0]:
+                    best = (d, active[a], active[b])
+        _, i, j = best
+        members[i] += members[j]
+        msk = np.isin(klab, members[i]); cents[i] = labw[msk].mean(0)
+        active.remove(j); del cents[j]
+    remap = {k: new for new, i in enumerate(active) for k in members[i]}
+    labels = np.array([remap[l] for l in klab])
     centroids = np.array([np.median(vc[labels == i], axis=0) if np.any(labels == i)
                           else [128, 128, 128] for i in range(N)])
     centroids = np.clip(np.round(centroids), 0, 255).astype(np.uint8)
