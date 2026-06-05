@@ -122,3 +122,15 @@ runs through the working TRELLIS path directly (no SDXL, no download fight).
 - **STL is geometry only (renders grey) — color lives in the GLB.** For a colored printable, repair_mesh
   transfers the GLB's texture color onto the watertight solid and writes `*_color.glb` / `*_color.ply`.
 - Front of the umbrella-character model is azimuth ~0; azimuth 180 is the dark hair back.
+
+## Bambu Studio (the slicer John uses)
+- Install on Ubuntu 24.04 via flatpak/Flathub: `sudo apt-get install -y flatpak`, add Flathub, then
+  `sudo flatpak install -y flathub com.bambulab.BambuStudio`. Got 2.6.0. (AppImage exists too but flatpak
+  is the cleaner path.) Run: `flatpak run com.bambulab.BambuStudio`.
+- **3MF IS Bambu's native project format** — it opens our color 3MF in color. The format was never the
+  problem; the texture spots were (a maths-fork artifact). Don't switch away from 3MF for Bambu.
+- Validate a 3MF slices, headless: `flatpak run --filesystem=home com.bambulab.BambuStudio --arrange 1
+  --orient 1 --slice 0 --outputdir <dir> <file.3mf>` → writes `result.json` to CWD with
+  `"error_string":"Success."` and `return_code:0` when it slices. The flatpak is SANDBOXED — the input
+  file must be under $HOME (not /tmp) or pass `--filesystem=`. `--export-png 0` needs a printer/process
+  preset loaded (`--load-settings`) to actually emit the image.
