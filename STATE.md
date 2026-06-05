@@ -17,14 +17,16 @@ umbrella image, which doesn't show the hat). Fix = multi-image IP-Adapter on the
   prompt emphasis (`/workspace/hatfb.sh`, refs download.png/OIP.png/umbrella.png, HEIGHT 1216 WIDTH 832,
   scale 0.3 steps 35 seed 11). This is the scale tradeoff: high scale = faithful but bust; low scale =
   full-body but needs strong prompt to hold the hat. 0.3 held both.
-- **3D DELIVERED (2026-06-05):** full-body figurine WITH the hat reconstructed in 3D. Files in
-  `FINAL/print_files/`: `figurine_hat_150mm.stl` (watertight geometry), `figurine_hat_4color_150mm.3mf`
-  (4 clean print regions), `material1-4_*_150mm.stl` (per-region), `figurine_hat_lifelike.glb` (full
-  color view). Scaled 110×150×83 mm. Renders in `FINAL/renders/`. Judgment: HAT FIXED (well-formed
-  conical hat + band, his #1 complaint); full body head-to-toe w/ sandals; 4 distinct regions clean
-  (dark cloak / navy scarf / tan hat / white accents). Right hand no longer obviously misshapen (arms
-  tucked in sleeves). REMAINING WEAKNESS: face is soft/noisy at full-body scale (known limit — needs a
-  face-focused high-res pass); flowing cloak is one large thin flared sheet (faithful to the art).
+- **3D DELIVERED — HD (2026-06-05):** full-body figurine WITH the hat, at octree-384 HD geometry.
+  Files in `FINAL/print_files/`: `figurine_hat_150mm.stl` (watertight), `figurine_hat_4color_150mm.3mf`
+  (4 print regions), `material1-4_*_150mm.stl`, `figurine_hat_lifelike.glb`. Scaled 127×150×93 mm.
+  Renders in `FINAL/renders/`. ALL THREE of John's defects addressed: (1) HAT FIXED — well-formed
+  conical hat + band reconstructed in 3D; (2) DETAIL — octree 384 (vs default 256) gives a legible face
+  (purple eyes + eye-band visible), crisp hat brim, cloth folds; the gain survives the 200k decimation,
+  CONFIRMED better than 256 by side-by-side render. Now baked as the apose_3d.sh default; (3) RIGHT HAND
+  no longer obviously misshapen (arms tuck into sleeves). Snake tongue below printable detail at 150mm
+  (expected). Minor: palette ΔE warn — tan vs white regions are close (24.4); flowing cloak is one large
+  thin flared sheet (faithful to art).
 - **Pipeline bug fixed this run:** apose_3d.sh hit `APOSE3D_DONE` with NO deliverables because repair
   crashed at decimation (missing `fast_simplification` dep) behind a grep filter. Fixed: dep added to
   bootstrap_fresh.sh; apose_3d.sh now guards each stage's output file (fails loud). See TROUBLESHOOTING.

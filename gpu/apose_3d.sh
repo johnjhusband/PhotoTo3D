@@ -12,7 +12,10 @@ log "1) preprocess canonical (isnet-anime, gray)"
 python pipeline/preprocess_reference.py out_ap/canonical.png out_ap/_prep --bg gray 2>&1 | tail -3
 
 log "2) Hunyuan SHAPE (crisp geometry, A-pose) — LOCAL weights (box HF is throttled; aria2c-fetched)"
+# HY_OCTREE=384 (vs default 256) ~doubles raw faces and gives a markedly sharper face/hands/folds that
+# SURVIVES the 200k decimation — confirmed better than 256 (2026-06-05). Override via env if VRAM-tight.
 HY_SHAPE_MODEL="${HY_SHAPE_MODEL:-/workspace/_hunyuan/hy3d21}" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
+  HY_OCTREE="${HY_OCTREE:-384}" HY_STEPS="${HY_STEPS:-50}" \
   /workspace/hyvenv/bin/python gpu/run_hunyuan_shape.py out_ap/_prep/ref_full.png out_ap/model.glb 2>&1 | tail -6
 [ -f out_ap/model.glb ] || { echo "SHAPE_FAILED"; exit 1; }
 
