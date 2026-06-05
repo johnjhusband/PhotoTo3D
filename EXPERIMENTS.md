@@ -132,3 +132,13 @@ obviously invented. Judged by me each round against the reference; repeat until 
   This is the college-grade geometry engine, and it's the CHEAPER escalation. New v2 pipeline:
   outpaint(core-crop) → `run_hunyuan_shape.py` → Hunyuan paint(delight) → repair(finer alpha REL_ALPHA 240)
   → color → 4-color. Running (out_fb2). TRELLIS.2 no longer needed for geometry.
+
+- 2026-06-05 **VIEWING FIXED (John is on THIS Linux box):** F3D (installed) reads .glb/.stl/.ply but
+  NOT .3mf (no 3MF reader) — that's why double-clicking the .3mf did nothing. Installed **MeshLab**
+  (reads .3mf), set xdg-mime defaults (.3mf/.stl→meshlab, .glb→f3d). View a model:
+  `f3d FINAL/print_files/figurine_fullcolor_lifelike.glb` or `meshlab <file.3mf>`.
+- 2026-06-05 **"more lifelike":** the 4-color GLB looks abstract because printing forces 4 FLAT colors.
+  Full-color per-vertex was NOISY (speckle). Fix: heavy Laplacian smoothing of the per-vertex colors →
+  `figurine_fullcolor_lifelike.glb` (smooth natural colors). Next lever for MORE realism = the full
+  UV-TEXTURED model (model_pbr, smoother than per-vertex) — needs a box restart; v2 UV-texture (G1) is
+  the durable fix (per-vertex color is band-limited; RESEARCH_RENDERING_MATH.md).
