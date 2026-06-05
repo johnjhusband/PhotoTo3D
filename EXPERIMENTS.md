@@ -164,3 +164,19 @@ obviously invented. Judged by me each round against the reference; repeat until 
       explicit hat prompt. (2) Not enough DETAIL for a 150mm print — push fidelity. (3) Right HAND
       misshapen. (4) Snake-tongue detail noted (likely too fine to print). Box restart queued; regenerate
       when up. Reproducibility runbook = REPRODUCE.md. Hook now has step 4 = update docs.
+
+- 2026-06-05 **Hat fix + full-body + HD geometry (all 3 John defects addressed):**
+  - HAT: multi-image IP-Adapter on the hat-bearing refs at LOW scale (0.3) + heavy full-body prompt =
+    full-body head-to-toe canonical WITH the conical straw hat. First multi-image try at scale 0.5 came
+    out a BUST (close-up hat refs pull portrait framing); dropping to 0.3 + full-body emphasis held both
+    the hat and the full figure. The scale tradeoff: high=faithful-but-bust, low=full-body-but-needs-prompt.
+  - 3D: Hunyuan SHAPE → paint → repair(alpha-wrap 320) → color → 4-color reconstructed the hat in 3D
+    cleanly (brim + band). Delivered `FINAL/print_files/figurine_hat_*` at 150mm (110x150x83mm).
+  - PIPELINE BUG: apose_3d.sh printed APOSE3D_DONE with NO deliverables — repair crashed at decimation
+    (`ModuleNotFoundError: fast_simplification`) hidden behind a grep filter. Fixed: dep in
+    bootstrap_fresh.sh; per-stage output guards in apose_3d.sh; lesson in TROUBLESHOOTING.
+  - DETAIL (soft face): added env detail knobs to run_hunyuan_shape.py. octree_resolution 384 (vs default
+    256) → 1.24M-face raw shape; bare geometry render shows MARKEDLY sharper face (eye-band/nose/chin),
+    hat brim, cloth folds, sandals. Confirmed the "soft face" was largely the noisy delit TEXTURE over OK
+    geometry; HD geometry is clearly better. Running full HD paint+repair+color+4color to produce the
+    higher-detail final. make_print_files.py builds the scaled print set in one command.
