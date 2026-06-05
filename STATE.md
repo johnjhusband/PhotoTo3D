@@ -25,8 +25,13 @@ umbrella image, which doesn't show the hat). Fix = multi-image IP-Adapter on the
   (purple eyes + eye-band visible), crisp hat brim, cloth folds; the gain survives the 200k decimation,
   CONFIRMED better than 256 by side-by-side render. Now baked as the apose_3d.sh default; (3) RIGHT HAND
   no longer obviously misshapen (arms tuck into sleeves). Snake tongue below printable detail at 150mm
-  (expected). Minor: palette ΔE warn — tan vs white regions are close (24.4); flowing cloak is one large
-  thin flared sheet (faithful to art).
+  (expected). Minor: flowing cloak is one large thin flared sheet (faithful to art — NOT a defect;
+  don't "fix" by thickening without John asking).
+  - **NON-ISSUE (do not chase):** the palette ΔE warning (tan vs white, ΔE 24.4) is cosmetic only.
+    Per the settled multi-material rule, only the 4 mesh REGIONS go in the file; the slicer assigns an
+    actual filament color to each region at print time (swappable). Two regions looking similar in the
+    GLB preview does NOT reduce the print to 3 colors — they are still 4 distinct partitions. Forcing
+    preview-distinct colors would contradict `feedback_multicolor_print_regions_not_filament_colors`.
 - **Pipeline bug fixed this run:** apose_3d.sh hit `APOSE3D_DONE` with NO deliverables because repair
   crashed at decimation (missing `fast_simplification` dep) behind a grep filter. Fixed: dep added to
   bootstrap_fresh.sh; apose_3d.sh now guards each stage's output file (fails loud). See TROUBLESHOOTING.
