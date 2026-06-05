@@ -102,6 +102,13 @@ runs through the working TRELLIS path directly (no SDXL, no download fight).
   stage that produces no file fails loudly instead of faking success.
 - **LESSON: never let a pipeline grep-filter its own stage output down to a happy-path marker** — a crash
   after the marker becomes a silent success. Keep a full per-stage log and assert the output file exists.
+- **Hunyuan PAINT `run_hunyuan_paint.py` exits with a `Segmentation fault` — this is BENIGN.** The painted
+  `*_pbr.glb` is fully written FIRST (you'll see `[hy-paint] DONE -> ...pbr.glb` then an `OBJ import ...`
+  line), and the segfault happens in a trailing Blender/Draco cleanup step after the file is on disk. The
+  repair step loads the pbr glb fine. So: guard on the OUTPUT FILE existing, NOT on the paint process exit
+  code (it's nonzero). Do NOT match `Segmentation` as a pipeline-failure signal in a monitor — it fires on
+  this benign crash while later stages are still running. (Draco warning `libextern_draco.so not found` is
+  also harmless — it just means no Draco compression.)
 
 ## Viewing / rendering with F3D (installed on the laptop)
 
