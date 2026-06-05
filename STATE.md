@@ -1,7 +1,28 @@
 # STATE.md — Live status
 
-**Last updated:** 2026-06-03 by Claude. Keep this current; it is the working memory a fresh instance
+**Last updated:** 2026-06-05 by Claude. Keep this current; it is the working memory a fresh instance
 inherits. Observed facts only — no guesses.
+
+## HAT + FULL-BODY CANONICAL ACHIEVED (2026-06-05) — fixing John's 3 defects
+
+John's review of the prior figurine: (1) the signature WIDE CONICAL STRAW HAT (kasa) — present in 5/6
+source images — was MISSING; (2) wanted more detail at 150mm; (3) right hand misshapen; (4) snake
+tongue noted as too fine to print. Root cause of the hat miss: I'd generated from ONE source (the
+umbrella image, which doesn't show the hat). Fix = multi-image IP-Adapter on the hat-bearing sources.
+
+- **Canonical FIXED (verified by eye):** `out_ap/canonical.png` on box 39639103 now shows the full
+  figure head-to-toe (both feet/sandals visible) WEARING the conical straw hat, eye-band, purple eyes,
+  brown hair, blue scarf, grey dress, dark cloak. First multi-image attempt came out a BUST (close-up
+  hat refs pulled portrait framing); fixed by dropping IP-Adapter `--scale` to 0.3 + heavy full-body
+  prompt emphasis (`/workspace/hatfb.sh`, refs download.png/OIP.png/umbrella.png, HEIGHT 1216 WIDTH 832,
+  scale 0.3 steps 35 seed 11). This is the scale tradeoff: high scale = faithful but bust; low scale =
+  full-body but needs strong prompt to hold the hat. 0.3 held both.
+- **RUNNING NOW:** `HY_SHAPE_MODEL=/workspace/_hunyuan/hy3d21 bash gpu/apose_3d.sh` on the full-body+hat
+  canonical → Hunyuan shape → paint → repair (REL_ALPHA 320) → color → 4-color. Monitoring apose3d.log
+  for APOSE3D_DONE. Next: pull, judge hat reconstruction + detail + right hand, then regen print files
+  scaled to 150mm and update FINAL/.
+- Box: **39639103**, RTX 3090, SSH `ssh9.vast.ai:39102`, key `~/.ssh/cto-deploy`. Fully bootstrapped
+  (all weights via aria2c, Hunyuan env + alpha-wrap built). STOP it when the iterate loop is acceptable.
 
 ## COLLEGE-GRADE RESULT (2026-06-05) — full-body, sharp geometry, clean 4-color
 
