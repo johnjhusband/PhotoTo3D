@@ -17,10 +17,19 @@ umbrella image, which doesn't show the hat). Fix = multi-image IP-Adapter on the
   prompt emphasis (`/workspace/hatfb.sh`, refs download.png/OIP.png/umbrella.png, HEIGHT 1216 WIDTH 832,
   scale 0.3 steps 35 seed 11). This is the scale tradeoff: high scale = faithful but bust; low scale =
   full-body but needs strong prompt to hold the hat. 0.3 held both.
-- **RUNNING NOW:** `HY_SHAPE_MODEL=/workspace/_hunyuan/hy3d21 bash gpu/apose_3d.sh` on the full-body+hat
-  canonical → Hunyuan shape → paint → repair (REL_ALPHA 320) → color → 4-color. Monitoring apose3d.log
-  for APOSE3D_DONE. Next: pull, judge hat reconstruction + detail + right hand, then regen print files
-  scaled to 150mm and update FINAL/.
+- **3D DELIVERED (2026-06-05):** full-body figurine WITH the hat reconstructed in 3D. Files in
+  `FINAL/print_files/`: `figurine_hat_150mm.stl` (watertight geometry), `figurine_hat_4color_150mm.3mf`
+  (4 clean print regions), `material1-4_*_150mm.stl` (per-region), `figurine_hat_lifelike.glb` (full
+  color view). Scaled 110×150×83 mm. Renders in `FINAL/renders/`. Judgment: HAT FIXED (well-formed
+  conical hat + band, his #1 complaint); full body head-to-toe w/ sandals; 4 distinct regions clean
+  (dark cloak / navy scarf / tan hat / white accents). Right hand no longer obviously misshapen (arms
+  tucked in sleeves). REMAINING WEAKNESS: face is soft/noisy at full-body scale (known limit — needs a
+  face-focused high-res pass); flowing cloak is one large thin flared sheet (faithful to the art).
+- **Pipeline bug fixed this run:** apose_3d.sh hit `APOSE3D_DONE` with NO deliverables because repair
+  crashed at decimation (missing `fast_simplification` dep) behind a grep filter. Fixed: dep added to
+  bootstrap_fresh.sh; apose_3d.sh now guards each stage's output file (fails loud). See TROUBLESHOOTING.
+- **Print-set step:** `pipeline/make_print_files.py` (NEW) — one command: 4-color GLB → scaled STL +
+  color 3MF + per-material STLs. Used to build the FINAL set. Box 39639103 still UP — STOP when done.
 - Box: **39639103**, RTX 3090, SSH `ssh9.vast.ai:39102`, key `~/.ssh/cto-deploy`. Fully bootstrapped
   (all weights via aria2c, Hunyuan env + alpha-wrap built). STOP it when the iterate loop is acceptable.
 
