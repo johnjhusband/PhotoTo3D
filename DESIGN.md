@@ -78,6 +78,16 @@ the reference. *(John's hardware/hands.)*
    case is just one value of N). Stage 4's palette-to-N is driven by that N. We do not assume a
    specific printer.
 
+## v2 (research-driven, "college-grade") — see RESEARCH_RENDERING_MATH.md
+
+The math says our "5th-grade" quality has specific root causes: per-vertex color (band-limited by mesh
+res → use UV texture), alpha-wrap blobbing (morphological closing → repair-only), TRELLIS-1's 64³ ceiling
+(→ TRELLIS.2 512³ + O-Voxel), single-view hallucination (→ multi-view first), linear-texture gamma, and
+baked lighting (→ delit albedo + matte BRDF). Full-body is done by completing the body in **2D first**
+(FLUX-Kontext identity uncrop + SMPL-X/DWpose A-pose scaffold + IP-Adapter, on-model gate), then
+reconstructing — never letting the 3D model invent legs. Full prioritized idea list + the math in
+**RESEARCH_RENDERING_MATH.md**.
+
 ## Status
 
 See **STATE.md** for live status. (Architecture: stages 1–4 + slicing automatable by the agent;
