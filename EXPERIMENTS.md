@@ -124,3 +124,11 @@ Fix: never let the 3D model invent. Complete the reference in **2D first**, then
 A rendered **4-color printable** where: the face has real features (eyes/mouth), color is bright and
 matches the reference palette with 4 clean regions (no splotch), geometry is crisp, and nothing is
 obviously invented. Judged by me each round against the reference; repeat until met.
+
+- 2026-06-05 **GEOMETRY BREAKTHROUGH: Hunyuan3D-2.1 SHAPE >> TRELLIS-1.** Per John's escalate rule, before
+  the TRELLIS.2 torch-2.6 rabbit hole I tried Hunyuan3D-2.1's SHAPE model (already-installed env, no
+  conflict). Result on the full-body ref: 752k v / 1.5M f (~6× TRELLIS-1) and DRAMATICALLY sharper — real
+  face with features, proper proportions, fingered hand, crisp boots, scarf-as-cape (no spiky tendrils).
+  This is the college-grade geometry engine, and it's the CHEAPER escalation. New v2 pipeline:
+  outpaint(core-crop) → `run_hunyuan_shape.py` → Hunyuan paint(delight) → repair(finer alpha REL_ALPHA 240)
+  → color → 4-color. Running (out_fb2). TRELLIS.2 no longer needed for geometry.
