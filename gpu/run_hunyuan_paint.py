@@ -48,7 +48,10 @@ def main():
         sys.exit("usage: run_hunyuan_paint.py <mesh> <reference_image> <out.glb>")
     mesh, image, out = sys.argv[1], sys.argv[2], sys.argv[3]
 
-    cfg = Hunyuan3DPaintConfig(max_num_view=6, resolution=512)
+    # more views + higher res = better multiview consistency (less color bleed on large thin parts
+    # like a cape). Env HY_VIEWS (default 8), HY_RES (default 768).
+    cfg = Hunyuan3DPaintConfig(max_num_view=int(os.environ.get("HY_VIEWS", "8")),
+                               resolution=int(os.environ.get("HY_RES", "768")))
     cfg.multiview_pretrained_path = os.environ.get("HY_WEIGHTS", "/workspace/_hunyuan/weights")
     cfg.dino_ckpt_path = os.environ.get("HY_DINO", "/workspace/_hunyuan/dinov2-giant")
     cfg.realesrgan_ckpt_path = os.environ.get(
