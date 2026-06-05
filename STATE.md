@@ -3,6 +3,23 @@
 **Last updated:** 2026-06-03 by Claude. Keep this current; it is the working memory a fresh instance
 inherits. Observed facts only — no guesses.
 
+## COLLEGE-GRADE RESULT (2026-06-05) — full-body, sharp geometry, clean 4-color
+
+Delivered: `FINAL/print_files/figurine_collegegrade_4color.3mf`. Pipeline (the v2 that works):
+1. `preprocess_reference.py` (isnet-anime/gray) → waist-up clean ref.
+2. `outpaint_fullbody.py` (SDXL inpaint + IP-Adapter + **core_crop** to trim trailing-ribbon tendrils)
+   → on-model full-body 2D ref (cheapest full-body path; identity preserved, only legs invented).
+3. **`run_hunyuan_shape.py` (Hunyuan3D-2.1 SHAPE)** → crisp geometry (~6× TRELLIS-1; real face, hands,
+   boots). This replaced TRELLIS-1 and is the college-grade geometry engine (cheaper than TRELLIS.2).
+4. `run_hunyuan_paint.py` (delit albedo) → color (HY_VIEWS/HY_RES env; 8@512 fits 24GB, 8@768 OOMs).
+5. `repair_mesh.py` (alpha-wrap, REL_ALPHA 240 to keep detail) → watertight.
+6. `color_correct.py` gentle (wb 0, sat 1.0, gamma 0.7 — strong sat amplifies texture bleed into patches).
+7. `palette_quantize.py` with **COLORSMOOTH (color pre-smooth) + overcluster-then-MERGE** (LWEIGHT 1.0 +
+   MERGE_EXTRA 3): merging the two near-identical cape darks into ONE region fixed the brown/navy cape
+   patchwork. Body grey / scarf blue / cape dark, 4 distinct.
+Remaining minor: a few blue/dark specks on the torso (residual bleed). Geometry + full-body + cape solved.
+Further: v2 UV-texture (G1) + semantic part color would remove the last specks (RESEARCH_RENDERING_MATH.md).
+
 ## LIVE (2026-06-04 eve) — iterate-until-acceptable loop on new box 39505355
 
 John's standing order: iterate continuously until the 4-color print is acceptable. Progress:
