@@ -3,6 +3,30 @@
 **Last updated:** 2026-06-05 by Claude. Keep this current; it is the working memory a fresh instance
 inherits. Observed facts only — no guesses.
 
+## NEW DIRECTION (2026-06-05): AI fork — text→2D→3D→4color (this is the `AI` branch)
+
+John judged the math-built renders too splotchy ("you are using math instead of AI... even the simplest
+AI image generator would be better. We might need a new approach."). Decision: FORK.
+- **`maths` branch** = the old pipeline preserved (IP-Adapter consolidation + Hunyuan delit texture
+  transfer + k-means palette). Splotch came from that math path. Don't delete it.
+- **`AI` branch** (current) = the new approach: a vision model (me) inspects the 6 `candidates/` images,
+  writes ONE clean text prompt, a text-to-image AI renders a crisp FLAT-COLOR full-body 2D reference,
+  then the SAME Hunyuan image→3D + palette-to-4 finish the job. Clean input → clean 3D → trivial 4-color.
+- **2D stage WORKS:** `pipeline/gen_ai_reference.py` → OpenAI **gpt-image-1** (key in `CTO/.env`, ~3¢/img)
+  → `AI_out/ref_ai_v1.png` — clean, flat, full-body, all signature features, plain bg. Far better than
+  the math 2D. See `AI_APPROACH.md` for the full plan + the cheap-image-gen research.
+- **RUNNING NOW:** the AI ref through `apose_3d.sh` (Hunyuan HD shape → paint → repair → 4color) on box
+  39639103. Monitoring `out_ap/_ai3d.log` for APOSE3D_DONE. Next: pull, judge whether the clean input
+  removed the splotch in 3D, build 150mm print set, show John.
+- **Bambu Studio 2.6.0 installed** locally (flatpak, Flathub). 3MF IS Bambu's native format (the format
+  was never the problem — the spots were). Bambu CLI can slice headless (`--slice 0 --export-png`) but
+  needs a printer preset for full output; not blocking.
+- Tooling added to `maths`/shared: `pipeline/make_print_files.py` (one-command scaled print set),
+  `palette_quantize.py` ISLAND_MIN speckle/island removal, octree-384 default, pipeline output guards.
+
+---
+### (prior — maths fork history below)
+
 ## HAT + FULL-BODY CANONICAL ACHIEVED (2026-06-05) — fixing John's 3 defects
 
 John's review of the prior figurine: (1) the signature WIDE CONICAL STRAW HAT (kasa) — present in 5/6
