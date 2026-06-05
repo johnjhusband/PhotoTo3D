@@ -168,6 +168,47 @@ def main():
             flab = votes.argmax(1)
         print(f"[palette] spatial label smoothing: {passes} neighbor-majority passes")
 
+    # ISLAND REMOVAL (the SPECKLE/SPOTS fix): blanket smoothing erodes real thin features before it
+    # fully kills speckle, so instead surgically remove tiny isolated color islands — connected
+    # components of one label smaller than ISLAND_MIN faces — by reassigning each island to the
+    # majority label of the faces touching its boundary. Repeat until no island shrinks further.
+    # This deletes scattered spots while preserving large legitimate regions (scarf, eye-band).
+    island_min = int(os.environ.get("ISLAND_MIN", "0"))
+    if island_min > 0:
+        from scipy.sparse import coo_matrix, csr_matrix
+        from scipy.sparse.csgraph import connected_components
+        adj = m.face_adjacency
+        nf = len(faces)
+        rows, cols = np.concatenate([adj[:, 0], adj[:, 1]]), np.concatenate([adj[:, 1], adj[:, 0]])
+        total_removed = 0
+        for sweep in range(20):
+            same = flab[rows] == flab[cols]                       # edges within one label
+            G = csr_matrix((np.ones(same.sum()), (rows[same], cols[same])), shape=(nf, nf))
+            ncomp, comp = connected_components(G, directed=False)
+            sizes = np.bincount(comp, minlength=ncomp)
+            small = np.where(sizes < island_min)[0]
+            if len(small) == 0:
+                break
+            small_set = set(small.tolist())
+            island_faces = np.where(np.isin(comp, list(small_set)))[0]
+            # neighbor-majority over ALL labels (cross-label edges) for island faces
+            Aall = csr_matrix((np.ones(len(rows)), (rows, cols)), shape=(nf, nf))
+            onehot = np.zeros((nf, N)); onehot[np.arange(nf), flab] = 1.0
+            nbr_votes = Aall.dot(onehot)
+            # don't let an island vote for its own (island) label: zero it where the neighbor is in-island
+            changed = 0
+            for fidx in island_faces:
+                v = nbr_votes[fidx].copy()
+                v[flab[fidx]] = 0                                  # prefer a DIFFERENT region
+                if v.sum() > 0:
+                    nl = int(v.argmax())
+                    if nl != flab[fidx]:
+                        flab[fidx] = nl; changed += 1
+            total_removed += changed
+            if changed == 0:
+                break
+        print(f"[palette] island removal: reassigned {total_removed} speckle faces (min {island_min})")
+
     # EXPLODE: each triangle gets its own 3 vertices, all one flat palette color -> no bleed
     tri_verts = np.asarray(m.vertices)[faces].reshape(-1, 3)
     tri_faces = np.arange(len(tri_verts)).reshape(-1, 3)

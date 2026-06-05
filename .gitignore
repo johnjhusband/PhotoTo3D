@@ -48,3 +48,4 @@ out_*/
 *.ckpt
 *.gif
 *.html
+AI_out/*_3d/
