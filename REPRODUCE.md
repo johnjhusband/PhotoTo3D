@@ -49,15 +49,18 @@ HY_SHAPE_MODEL=/workspace/_hunyuan/hy3d21 bash gpu/apose_3d.sh
 #    outputs: out_ap/model.glb (geometry), model_pbr.glb (color), printable_color.glb, print_4color_4color.*
 ```
 
-## On the laptop — pull + make print files
+## Make the print files (one command, scaled to mm)
+`make_print_files.py` turns the pipeline's 4-color GLB into the complete print set, scaled so the
+longest extent == the target height (default 150 mm): one geometry STL (from the watertight
+`printable_color.glb`), one color 3MF (slicer opens in color), and one STL per color region.
 ```
-scp box:/workspace/out_ap/printable_color.glb out_ap/print_4color_4color.glb ./
-# lifelike full-color (smooth the per-vertex noise) for viewing:
-python pipeline/color_correct.py print_4color... ; (Laplacian color smooth) -> figurine_apose_lifelike.glb
-# print files (scaled to a chosen height, e.g. 150 mm): single STL + color 3MF + per-material STLs
-#   load the 4-color GLB, scale to TARGET_MM/extents.max(), export .stl, per-color .stl, and
-#   gpu/export_color3mf.py for the colored .3mf.  (See FINAL/print_files for the produced set.)
+# on the box (has trimesh + lib3mf), after apose_3d.sh:
+python pipeline/make_print_files.py out_ap/print_4color_4color.glb FINAL/print_files \
+    --prefix figurine --mm 150 --geometry out_ap/printable_color.glb
+# -> figurine_150mm.stl, figurine_4color_150mm.3mf, material1..4_<hex>_150mm.stl
+scp box:/workspace/FINAL/print_files/* FINAL/print_files/    # pull the set to the laptop
 ```
+Optional lifelike full-color view (smooth per-vertex noise): `color_correct.py` on `printable_color.glb`.
 
 ## Key parameters that matter (tuned)
 - A-pose gen: `--scale 0.4` (IP-Adapter; low = prompt controls pose for full-body), portrait `832x1216`.
