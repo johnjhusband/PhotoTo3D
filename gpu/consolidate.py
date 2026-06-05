@@ -60,7 +60,7 @@ def main():
         # one IP-Adapter conditioned on ALL refs -> wrap as a single adapter's image set
         ip_adapter_image=[refs],
         num_inference_steps=a.steps, guidance_scale=6.0, generator=g,
-        height=1024, width=1024,
+        height=int(os.environ.get("HEIGHT", "1024")), width=int(os.environ.get("WIDTH", "1024")),
     ).images[0]
 
     os.makedirs(os.path.dirname(os.path.abspath(a.out_image)), exist_ok=True)
