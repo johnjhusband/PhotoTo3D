@@ -31,5 +31,7 @@ trivial 4-color reduction.
   but needs a NEW account/key. Hold in reserve if gpt-image-1 style isn't anime enough.
 
 ## Status
-2D stage validated (`AI_out/ref_ai_v1.png` — clean). Running 3D next.
-Open refinement: the eye-band and arm bandages are faint in v1; can re-prompt if needed.
+2D stage validated. `AI_out/ref_ai_v1.png` = first clean output; `AI_out/ref_ai_v2.png` = **chosen
+reference** (stronger prompt: clear blindfold eye-band, visible spiral arm/leg bandages, open A-pose so
+hands reconstruct). v1 is running through 3D as a splotch-check comparison; v2 is the definitive run.
+Next: judge v1 3D → run v2 3D → palette-to-4 → 150mm print set → FINAL on the AI branch.
