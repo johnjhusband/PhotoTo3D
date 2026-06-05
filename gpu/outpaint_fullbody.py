@@ -38,6 +38,32 @@ def subject_bbox(rgb, bg=GRAY, tol=10):
     return (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)
 
 
+def core_crop(rgb, bg=GRAY, tol=10, keep=0.90):
+    """Crop to the DENSE body core, trimming sparse outer columns (thin trailing scarf/umbrella ribbons
+    that TRELLIS turns into spiky tendrils). Keep the central columns holding `keep` fraction of subject
+    mass; drop the wide sparse tails on each side."""
+    a = np.asarray(rgb).astype(int)
+    m = (np.abs(a - np.array(bg)).sum(2) > tol)
+    col = m.sum(0).astype(float)
+    if col.sum() == 0:
+        return rgb
+    # weighted center; expand a window outward until it holds `keep` of the mass
+    total = col.sum()
+    c = int((np.arange(len(col)) * col).sum() / total)
+    lo = hi = c
+    acc = col[c]
+    while acc < keep * total and (lo > 0 or hi < len(col) - 1):
+        if lo > 0 and (hi >= len(col) - 1 or col[lo - 1] >= col[hi + 1]):
+            lo -= 1; acc += col[lo]
+        elif hi < len(col) - 1:
+            hi += 1; acc += col[hi]
+        else:
+            break
+    ys = np.where(m.any(1))[0]
+    t, b = (ys.min(), ys.max() + 1) if len(ys) else (0, rgb.height)
+    return rgb.crop((lo, t, hi + 1, b))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("inp"); ap.add_argument("out")
@@ -47,8 +73,9 @@ def main():
     a = ap.parse_args()
 
     src = Image.open(a.inp).convert("RGB")
+    src = core_crop(src, keep=float(os.environ.get("CORE_KEEP", "0.90")))  # drop trailing-ribbon tendrils
     l, t, r, b = subject_bbox(src)
-    subj = src.crop((l, t, r, b))                      # tight waist-up character
+    subj = src.crop((l, t, r, b))                      # tight waist-up character core
     sw, sh = subj.size
 
     # place the waist-up subject in the TOP_FRAC band of the portrait canvas, centered horizontally
