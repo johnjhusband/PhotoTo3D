@@ -24,10 +24,16 @@ log "3) Hunyuan PAINT (delit color)"
 MESH=out_ap/model_pbr.glb; [ -f "$MESH" ] || MESH=out_ap/model.glb
 
 log "4) detail-preserving repair (finer alpha to keep face/hands; lighter decimation)"
-REL_ALPHA=320 python pipeline/repair_mesh.py "$MESH" out_ap/printable 300000 2>&1 | grep -aE "repair\] FINAL|watertight"
+# NOTE: do NOT hide the full output behind a narrow grep — a crash AFTER "watertight solid"
+# (e.g. in color-transfer) would be invisible and the pipeline would "succeed" with no file.
+# Keep a full log and GUARD the actual deliverable.
+REL_ALPHA=320 python pipeline/repair_mesh.py "$MESH" out_ap/printable 300000 2>&1 | tee out_ap/_repair.log | grep -aE "repair\]|watertight|Error|Traceback" | tail -8
+[ -f out_ap/printable_color.glb ] || { echo "REPAIR_FAILED: no printable_color.glb (see out_ap/_repair.log)"; tail -20 out_ap/_repair.log; exit 1; }
 
 log "5) gentle color + 4-color + lifelike full-color"
-python pipeline/color_correct.py out_ap/printable_color.glb out_ap/printable_cc.glb --wb 0.0 --sat 1.0 --gamma 0.7 --lo 1 --hi 99 2>&1 | grep "out mean"
-COLORSMOOTH=25 LWEIGHT=1.0 MERGE_EXTRA=3 SMOOTH_PASSES=12 python pipeline/palette_quantize.py out_ap/printable_cc.glb out_ap/print_4color 4 2>&1 | grep -aE "regions|WARN"
+python pipeline/color_correct.py out_ap/printable_color.glb out_ap/printable_cc.glb --wb 0.0 --sat 1.0 --gamma 0.7 --lo 1 --hi 99 2>&1 | grep -aE "out mean|Error|Traceback"
+[ -f out_ap/printable_cc.glb ] || { echo "COLOR_CORRECT_FAILED: no printable_cc.glb"; exit 1; }
+COLORSMOOTH=25 LWEIGHT=1.0 MERGE_EXTRA=3 SMOOTH_PASSES=12 python pipeline/palette_quantize.py out_ap/printable_cc.glb out_ap/print_4color 4 2>&1 | grep -aE "regions|WARN|Error|Traceback"
+[ -f out_ap/print_4color_4color.glb ] || { echo "PALETTE_FAILED: no print_4color_4color.glb"; exit 1; }
 
 log "APOSE3D_DONE"; ls -la out_ap/print_4color_4color.glb out_ap/printable_color.glb out_ap/model.glb 2>/dev/null

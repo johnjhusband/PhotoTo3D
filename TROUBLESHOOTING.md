@@ -92,6 +92,16 @@ runs through the working TRELLIS path directly (no SDXL, no download fight).
   `np.asarray(f, int32)`.
 - **Headless mesh rendering** (trimesh `save_image`) needs pyglet — not installed. Use **F3D** instead
   (installed locally via apt): it views AND renders STL/GLB/3MF/PLY/OBJ.
+- **`repair_mesh.py` crashes at decimation with `ModuleNotFoundError: fast_simplification`** — current
+  trimesh imports `fast_simplification` lazily inside `simplify_quadric_decimation`. On a fresh box it's
+  not installed, so repair builds the watertight solid then dies at the decimate step — and because
+  `apose_3d.sh` greps the repair output, the traceback was INVISIBLE and the pipeline printed
+  `APOSE3D_DONE` with NO `printable_color.glb` (stage 5 then silently produced nothing). Fix: install
+  `fast_simplification` (now in `bootstrap_fresh.sh`). Hardening: `apose_3d.sh` now `tee`s a full
+  `out_ap/_repair.log` and GUARDS each deliverable (`REPAIR_FAILED`/`PALETTE_FAILED` + exit 1) so a
+  stage that produces no file fails loudly instead of faking success.
+- **LESSON: never let a pipeline grep-filter its own stage output down to a happy-path marker** — a crash
+  after the marker becomes a silent success. Keep a full per-stage log and assert the output file exists.
 
 ## Viewing / rendering with F3D (installed on the laptop)
 

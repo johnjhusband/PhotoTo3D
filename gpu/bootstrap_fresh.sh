@@ -11,7 +11,10 @@ pip install -q huggingface_hub 2>&1 | tail -1
 
 log "1) base mesh/diffusion python deps (PyPI, fast) — no TRELLIS"
 pip install -q trimesh rembg onnxruntime scipy scikit-learn lib3mf xatlas pymeshfix pillow numpy \
+  fast_simplification \
   "diffusers>=0.30,<0.32" accelerate peft safetensors transformers==4.46.3 imageio imageio-ffmpeg 2>&1 | tail -2
+# fast_simplification: trimesh's simplify_quadric_decimation imports it lazily; without it the
+# repair step crashes at decimation (AFTER building the watertight solid) — see TROUBLESHOOTING.
 
 log "2) clone Hunyuan3D-2.1 (GitHub, fast) + build paint env (hyvenv)"
 git config --global http.version HTTP/1.1
