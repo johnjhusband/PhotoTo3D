@@ -15,6 +15,13 @@ with this repo cloned can follow these steps and reproduce it. All scripts refer
 - A laptop/desktop to drive it over SSH and do the light final mesh export (CPU).
 - `.env` holds `VAST_API_KEY` (gitignored). Rent: `vastai create instance <offer> --image pytorch/pytorch:2.4.1-cuda12.1-cudnn9-devel --disk 120 --ssh --direct`.
 
+## Fastest path: one-command fresh-box bootstrap
+On a fresh vast.ai box, after copying `gpu/` + `pipeline/` + the source images to `/workspace`:
+```
+bash gpu/bootstrap_fresh.sh   # no TRELLIS; aria2c all weights; build envs; multi-image A-pose (hat) -> 3D
+```
+This does everything below automatically. The manual steps are kept for reference / debugging.
+
 ## On the GPU box — install (once)
 Copy `gpu/` and `pipeline/` to `/workspace`, then:
 ```
@@ -60,8 +67,11 @@ python pipeline/color_correct.py print_4color... ; (Laplacian color smooth) -> f
   color pre-smoothing kills speckle).
 
 ## INFRA GOTCHAS (these cost hours — read them)
-1. **vast.ai HF download is throttled to ~1.3 KB/s per connection** (single-stream hangs for hours).
-   Use **aria2c -x16 -s16** (~138 MB/s) — that's what `fetch_hunyuan_shape_weights.sh` does.
+1. **vast.ai HF download is throttled per-connection to ~57 B/s – 1.3 KB/s** (single-stream hangs for
+   HOURS) — and it affects EVERY HF model (SDXL, IP-Adapter, Hunyuan paint/dino/shape), not just one.
+   PyPI and GitHub are NOT throttled (pip/git work fine). The bypass is **aria2c -x16 -s16** (~12–138 MB/s):
+   `gpu/fetch_hf.py <repo> <dest> [globs]` lists files via the (un-throttled) HF API then aria2c's them.
+   `bootstrap_fresh.sh` uses it for all weights. TRELLIS is NOT needed (pipeline uses Hunyuan shape).
 2. **stop/restart is fragile**: a host "address already in use" port conflict can permanently brick a
    stopped instance. Keep the box running, or expect to rent fresh.
 3. **Do NOT pipe generation scripts through `tail`** — Python block-buffers to a pipe and you see nothing
