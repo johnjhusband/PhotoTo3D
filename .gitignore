@@ -49,3 +49,8 @@ out_*/
 *.gif
 *.html
 AI_out/*_3d/
+archive/
+_judge/
+_cands/
+_hat/
+_hattest/
