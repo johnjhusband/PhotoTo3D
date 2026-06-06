@@ -3,6 +3,10 @@
 **Last updated:** 2026-06-05 by Claude. Keep this current; it is the working memory a fresh instance
 inherits. Observed facts only — no guesses.
 
+**TEST_PLAN.md is the definition of done** — run `python pipeline/verify_deliverable.py <body.3mf> <hat.3mf>`
+(section A, automated) AND the B/C render-and-eyeball checks before declaring any figurine done. The
+hat-on-spear bug shipped because only "math correct" was checked, not function (hat seats on head) + looks.
+
 ## NEW DIRECTION (2026-06-05): AI fork — text→2D→3D→4color (this is the `AI` branch)
 
 John judged the math-built renders too splotchy ("you are using math instead of AI... even the simplest
