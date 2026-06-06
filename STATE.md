@@ -17,9 +17,14 @@ AI image generator would be better. We might need a new approach."). Decision: F
   clean (best for 3D); `--ref` image-conditioned = source-style. 4 refs in `AI_out/2d_references/`.
 - **3D DELIVERABLE (v2b):** clean flat ref → Hunyuan → repair → 4color = no splotch, hands separated
   from cape (arms-out v2 ref + alpha 360 = the sweet spot; 320 fused hands, 440 broke watertight),
-  watertight. In `AI_out/`: `3d_renders/`, `3d_models/`, `print_files/figurine_ai_*_150mm.{stl,3mf}`.
-- **HAT PUZZLE DONE:** `pipeline/split_hat_puzzle.py` → body+peg / hat+socket (mortise-tenon, 0.3mm
-  clearance), both watertight, in `AI_out/print_files/hat_puzzle/`. Print body skin, hat straw, press-fit.
+  watertight. `AI_out/print_files/figurine_ai_4color_150mm.3mf`.
+- **HAT PUZZLE = 5 COLORS (4 body + straw hat), DONE:** `split_hat_puzzle.py <4color> --color <lifelike>`
+  → `AI_out/print_files/hat_puzzle/figurine_body_4color.3mf` (4 regions + peg; LWEIGHT 0.25 keeps the
+  blue scarf) + `figurine_hat_straw.3mf` (+ socket). Print body on 4-filament AMS, hat straw, press-fit.
+- **STLs DROPPED** everywhere (no color; 3MF is the Bambu deliverable). Bambu launches on John's Wayland
+  session (env vars in AI_APPROACH.md); it loads our 3MF fine.
+- **RUNNING:** v3 tongue test (`ref_ai_v3_tongue.png` → 3D) to see if a prominent snake tongue survives
+  at 150mm. Then re-split to 5-color.
 - **Bambu 2.6.0 installed**; loads our 3MF (exit 0); `.3mf`→Bambu association set (gio + home access).
   GUI double-click is John's to confirm. CLI slicer segfaults headless (no display).
 - **Google Drive sync LIVE:** `bash pipeline/sync_to_drive.sh` mirrors `AI_out/` to John's folder.
