@@ -35,7 +35,7 @@ AI image generator would be better. We might need a new approach."). Decision: F
   before the final quantize (ISLAND_MIN=0).
 - **FINAL DELIVERABLE (v4, 2026-06-05):** weapon + snake tongue, 5 colors. `AI_out/print_files/hat_puzzle/`
   `figurine_body_4color.3mf` (dark robe+staff, skin, blue scarf, red tongue, + peg) + `figurine_hat_straw.3mf`
-  (+ socket), both WELDED manifold (no Bambu floating warning). Renders in `AI_out/3d_renders/`. On Drive.
+  (+ socket), both WELDED manifold + watertight 1-component (TESTED: peg seats on the head, no floating regions). Renders in `AI_out/3d_renders/` (incl `0_assembled.png`). On Drive.
   Box 39639103 still up/idle — STOP to halt billing.
 - **Bambu 2.6.0 installed**; loads our 3MF (exit 0); `.3mf`→Bambu association set (gio + home access).
   GUI double-click is John's to confirm. CLI slicer segfaults headless (no display).

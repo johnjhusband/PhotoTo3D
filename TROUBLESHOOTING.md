@@ -171,3 +171,17 @@ runs through the working TRELLIS path directly (no SDXL, no download fight).
   tenon cube join — a peg on the head crown into a socket in the hat underside (clearance ~0.3mm/side for
   an FDM press-fit). Hat region = the color region with the highest mean Y; keep its largest connected
   component. Booleans need `manifold3d` (pip). Tune `--peg` and `--clearance` to the print.
+
+## Always TEST the shipped 3MF (watertight + 1 component), not just "it exported"
+Two bugs slipped into a delivered set and were only caught by loading the EXACT shipped files
+(2026-06-06):
+- **Tiny floating component** (e.g. a 2-face sliver from a boolean) → Bambu floating-region warning even
+  though the body looked fine. Fix: `palette_quantize.py` drops components < `MIN_COMPONENT` (default 50)
+  faces. Test: `trimesh.load(x.3mf).split(only_watertight=False)` must be 1 component, watertight=True.
+- **Peg on the wrong place when a weapon is present:** `split_hat_puzzle` placed the head peg at the
+  body's GLOBAL max-Y — but the spear is taller than the head, so the peg landed on the spear tip and the
+  socket on the hat edge → the hat would NOT seat on the head. Fix: peg goes at the HAT axis (centroid of
+  hat-region verts) at the body's top NEAR that axis. Verify by concatenating body+hat and rendering — the
+  hat must sit on the head.
+Note: trimesh CANNOT read our per-face 3MF colors (reports 1 grey color) — that's expected; Bambu reads
+them. Use trimesh only for the geometry/manifold test, not the color test.
