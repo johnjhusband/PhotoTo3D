@@ -44,6 +44,21 @@ the exact thing that made early 3D muddy. So: drive the 3D off the FLAT referenc
 treat the moody/photoreal images as the "look" target — OR push the moody one through 3D to see. Awaiting
 John's pick. Snake tongue is in the 2D; at 150 mm it is likely below printable detail (noted before).
 
-## Status
-2D stage validated, 4 style variants in `AI_out/`. v1 (flat) running through 3D now (clean path).
-Next: judge v1 3D → palette-to-4 → 150mm print set → FINAL on the AI branch (style per John's pick).
+## Status — AI FORK VALIDATED END-TO-END (2026-06-05)
+The clean flat AI 2D reference → 3D came out MUCH cleaner than the maths fork: the cloak is one solid
+dark region (no speckled patchwork), hat clean, hands intact, full body. John: "your new-approach
+instinct was right." Splotch essentially solved by clean input. Everything in `AI_out/`:
+- 2D refs: `ref_ai_v1/v2.png` (flat, used for 3D), `ref_source_style.png` + `ref_photoreal.png` (style).
+- 3D renders: `3d_lifelike_front.png`, `3d_4color_front.png`, `3d_lifelike_34.png`.
+- 3D models: `figurine_ai_lifelike.glb`, `figurine_ai_4color.glb`.
+- **Print set (150mm Bambu):** `AI_out/print_files/figurine_ai_4color_150mm.3mf` + `_150mm.stl` +
+  `material1-4_*.stl`. Watertight, 58×150×54 mm. THE AI-fork printable deliverable.
+
+Residual: light speckle on the dark cloak (much less than maths); 4-color lumped the eye/face into the
+blue (can separate with a tuned palette). Snake tongue is 2D-only (too fine at 150mm).
+
+## Google Drive sync (John asked to keep an images folder current)
+`pipeline/sync_to_drive.sh` (rclone) mirrors `AI_out/*.png|*.glb` to Drive folder
+`1INrnKYrmYm9DwYDbhvaKUZ_AK9nSjhIu`. BLOCKED on one-time OAuth: John runs `rclone authorize "drive"`,
+pastes the token; then `rclone config create gdrive drive scope=drive root_folder_id=<id> token='<json>'`
+and the script syncs. rclone installed (v1.60.1). Re-run the script after each new image batch.
