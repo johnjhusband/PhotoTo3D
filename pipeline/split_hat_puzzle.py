@@ -41,41 +41,51 @@ def load_scaled(path, mm):
     return m, vc
 
 
-def largest_component(mesh, faces_idx):
-    """Given a subset of face indices, return the indices of its largest face-connected component."""
-    sub = mesh.submesh([faces_idx], append=True, repair=False)
-    cc = sub.split(only_watertight=False)
-    if not cc:
-        return faces_idx
-    biggest = max(cc, key=lambda c: len(c.faces))
-    # map back: match by face centroid (submesh reorders); simpler — recompute on original adjacency
-    return faces_idx  # submesh path below handles geometry; we keep label set, clean via fill later
+def hat_face_mask(mesh, vcolors):
+    """Identify hat faces = the highest SAME-COLOR connected component.
 
-
-def hat_face_mask(mesh, vcolors, N_top_frac=0.5):
-    """Identify hat faces = the color region with the highest mean Z (the hat sits on top)."""
-    faces = mesh.faces
-    fcol = vcolors[faces][:, 0, :3]                      # flat per-face color (corner 0)
+    Picking the highest color *region* fails: the hat-tan also colors the sandals at the bottom, so the
+    region mean drops below the scarf. Instead, split each color region into connected components (edges
+    only between same-color faces), then take the sizable component whose centroid sits highest = the hat.
+    """
+    # per-face color from the EXPLODED mesh (each face's corner-0 color), captured BEFORE welding
+    fcol = vcolors[mesh.faces][:, 0, :3]
     uniq, inv = np.unique(fcol, axis=0, return_inverse=True)
-    fz = mesh.triangles_center[:, 1]                     # Y is up in these GLBs
-    # mean height per color region
-    means = np.array([fz[inv == k].mean() if np.any(inv == k) else -1e9 for k in range(len(uniq))])
-    hat_k = int(means.argmax())
-    mask = inv == hat_k
-    return mask, uniq[hat_k]
+    # the 4-color GLB is vertex-exploded (no shared verts) -> face_adjacency is empty. Weld coincident
+    # vertices so adjacency works; merge_vertices keeps face count/order so `inv` (per-face) still aligns.
+    mesh.merge_vertices()
+    fy = mesh.triangles_center[:, 1]                      # Y up
+    adj = mesh.face_adjacency                             # pairs of touching faces
+    same = inv[adj[:, 0]] == inv[adj[:, 1]]               # same-color adjacency
+    from scipy.sparse import csr_matrix
+    from scipy.sparse.csgraph import connected_components
+    nf = len(mesh.faces)
+    e = adj[same]
+    G = csr_matrix((np.ones(len(e)), (e[:, 0], e[:, 1])), shape=(nf, nf))
+    ncomp, comp = connected_components(G, directed=False)
+    sizes = np.bincount(comp, minlength=ncomp)
+    big = np.where(sizes >= max(200, 0.01 * nf))[0]       # ignore tiny specks
+    # highest centroid among sizable components
+    best = max(big, key=lambda c: fy[comp == c].mean())
+    mask = comp == best
+    return mask, uniq[inv[np.where(mask)[0][0]]]
 
 
 def watertight_part(mesh, face_mask):
-    """Submesh of face_mask, keep largest connected component, fill boundary holes -> watertight solid."""
+    """Submesh of face_mask, keep its largest piece, close holes robustly with pymeshfix -> watertight."""
+    import pymeshfix
     idx = np.where(face_mask)[0]
     part = mesh.submesh([idx], append=True, repair=False)
     comps = part.split(only_watertight=False)
     if comps:
         part = max(comps, key=lambda c: len(c.faces))
     part.merge_vertices()
-    trimesh.repair.fill_holes(part)
-    trimesh.repair.fix_normals(part)
-    return part
+    v = np.asarray(part.vertices, np.float64)
+    f = np.asarray(part.faces, np.int32)
+    vclean, fclean = pymeshfix.clean_from_arrays(v, f)   # closes holes -> watertight solid
+    out = trimesh.Trimesh(vertices=vclean, faces=fclean, process=False)
+    trimesh.repair.fix_normals(out)
+    return out
 
 
 def cube(center, edge, height=None):
