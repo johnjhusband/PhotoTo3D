@@ -21,10 +21,17 @@ AI image generator would be better. We might need a new approach."). Decision: F
 - **HAT PUZZLE = 5 COLORS (4 body + straw hat), DONE:** `split_hat_puzzle.py <4color> --color <lifelike>`
   → `AI_out/print_files/hat_puzzle/figurine_body_4color.3mf` (4 regions + peg; LWEIGHT 0.25 keeps the
   blue scarf) + `figurine_hat_straw.3mf` (+ socket). Print body on 4-filament AMS, hat straw, press-fit.
-- **STLs DROPPED** everywhere (no color; 3MF is the Bambu deliverable). Bambu launches on John's Wayland
-  session (env vars in AI_APPROACH.md); it loads our 3MF fine.
-- **RUNNING:** v3 tongue test (`ref_ai_v3_tongue.png` → 3D) to see if a prominent snake tongue survives
-  at 150mm. Then re-split to 5-color.
+- **STLs DROPPED** everywhere (no color; 3MF is the Bambu deliverable).
+- **WELDED 3MF FIX:** Bambu flagged floating-regions/empty-layers because the 3MF came from the
+  vertex-EXPLODED mesh (polygon soup). `export_face_color_3mf()` now writes a WELDED manifold with
+  per-triangle color; `palette_quantize.py` + `make_print_files.py` use it. Always weld the 3MF.
+- **TONGUE survived 3D** (v3, red forked tongue). Body 4-color at **LWEIGHT 0.6** = {dark clothing, skin,
+  blue scarf, red tongue}.
+- **RUNNING: v4 = WEAPON + tongue** (`ref_ai_v4_weapon.png` — spear/polearm from OIP1/OIP2 sources + the
+  snake tongue) → 3D on box 39639103, `out_ap/_v4.log`. Next: render to confirm weapon survived, welded
+  5-color split (body 4-color + straw hat), update AI_out + Drive, show John.
+- **NOTE:** current `AI_out/print_files` 3MFs are the pre-fix EXPLODED (floating) v2b set — being replaced
+  by the welded v4 set. Don't ship those.
 - **Bambu 2.6.0 installed**; loads our 3MF (exit 0); `.3mf`→Bambu association set (gio + home access).
   GUI double-click is John's to confirm. CLI slicer segfaults headless (no display).
 - **Google Drive sync LIVE:** `bash pipeline/sync_to_drive.sh` mirrors `AI_out/` to John's folder.
