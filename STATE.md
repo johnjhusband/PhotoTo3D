@@ -46,6 +46,8 @@ AI image generator would be better. We might need a new approach."). Decision: F
 - **Google Drive sync LIVE:** `bash pipeline/sync_to_drive.sh` mirrors `AI_out/` to John's folder.
 - **Filesystem cleaned + reorganized** (`AI_out/{2d_references,3d_renders,3d_models,print_files}`); the
   Stop hook `phototo3d_cleanup.sh` now deletes scratch + archives uncertain files to `archive/<date>/`.
+- **BOXES (I manage these now — never ask John):** destroyed dead boxes 39215079 + 39505355 (2026-06-06); only **39639103** remains, STOPPED (restart currently blocked: 'resources unavailable' — slot taken). Storage-fee only. Re-bootstrap via `bootstrap_fresh.sh` if it won't come back.
+- **DELIVERABLE RENDERS = clean 4-color ONLY.** The lifelike preview is speckly (Hunyuan texture noise) — NEVER ship it. The Stop cleanup hook now auto-deletes `*lifelike*` from `AI_out/3d_renders` + sweeps my /tmp+$HOME scratch. Current clean renders: `figurine_{body_4color,hat}_CURRENT.png`. See TEST_PLAN C11.
 - **OPEN (John's call):** flat vs moody source-style for the figurine; stop the idle box 39639103.
 - Shared tooling: `make_print_files.py`, `palette_quantize.py` ISLAND_MIN, octree-384 default, stage guards.
 
