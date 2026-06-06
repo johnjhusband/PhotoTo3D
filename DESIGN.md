@@ -107,17 +107,24 @@ split it into separate prints and assemble them. The HAT was the first one (stra
   - **Hat** — sits on the head, peg-in-socket. (done)
   - **Staff / weapon** — a rigid rod that drops into a hole in the hand. The EASIEST of all: it barely
     touches the body (just the grip), prints as a simple rod, and can even be multi-colored on its own.
-  - **Cloak / cape** — a big outer shell. Separating it frees the MOST color budget (it's usually the
-    dominant dark color) and it assembles as an over-layer (rest it on the shoulders / clip at the neck).
-- **BAD — never separate these.** SMALL, THIN, FRAGILE parts, or parts with a hidden/complex interface.
-  They are hard to print and far harder to align and glue.
-  - **Tongue, fingers, thin straps, eye-band.** Keep them attached to whatever larger part they sit on.
+  - **Cloak / cape** — ONLY if it is a distinct shell over a complete body. **In a fused 3D
+    reconstruction (the normal case here) the cloak is NOT separable** — it IS the outer surface, so
+    removing it SHATTERS the body into ~1000 disconnected fragments (tested + confirmed 2026-06-06: the
+    "body" became a hollow front panel + floating bits, not a printable solid). Don't try to split a
+    fused layer. The hat/staff separate cleanly only because they are TOPOLOGICALLY DISTINCT (a cap on
+    top, a rod in the hand); the cloak is structural.
+- **BAD — never separate these.** SMALL, THIN, FRAGILE parts, parts with a hidden/complex interface, or
+  any layer FUSED into the body shell. They are hard to print and far harder to align and glue.
+  - **Tongue, fingers, thin straps, eye-band, the cloak.** Keep them attached.
 
-**How it solves a color overflow (worked example — the tongue problem):**
-Body wants 5 colors: dark robe, grey dress, skin, blue scarf, red tongue. Don't separate the tongue
-(too small). Instead **separate the CLOAK** (a large dark shell). Now the body underneath needs only 4
-colors — grey dress, skin, blue scarf, red tongue — which fits a 4-filament print. The cloak prints
-separately in dark and goes on like a coat. Total = body(4) + cloak(1) + hat(1).
+**How to actually solve a color overflow (the tongue problem, tested 2026-06-06):**
+Body wants 5 colors: dark cloak, grey dress, skin, blue scarf, red tongue — but a 4-filament print does
+4. Splitting the cloak FAILS (it's fused; shatters the body). The tongue is too small to split. So the
+real fix is **drop the least important color in the quantizer, not split geometry.** Re-quantize the
+body to the 4 that matter — `LWEIGHT 1.6` (lightness-weighted) gives {black cloak, grey dress, skin,
+blue scarf}; the tiny red tongue merges into the dark. The tongue is still THERE geometrically, just not
+its own color. Net: a clean, non-dark 4-color body. (Keeping the red tongue instead costs the grey dress
+its slot → the body reads dark. It's a genuine pick, not a bug.) The hat stays a separate straw print.
 
 **Always:**
 1. Add a registration feature so parts fit ONE way and assemble by hand (peg/socket like the hat).
