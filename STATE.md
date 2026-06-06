@@ -7,6 +7,20 @@ inherits. Observed facts only — no guesses.
 (section A, automated) AND the B/C render-and-eyeball checks before declaring any figurine done. The
 hat-on-spear bug shipped because only "math correct" was checked, not function (hat seats on head) + looks.
 
+## LOOK-BEFORE-CLAIM + honest hat status (2026-06-06)
+
+John caught me claiming the puzzle pieces fit when I'd never rendered the hat. ENFORCED now: stop hook
+rule 'you haven't looked until you rendered it + viewed the image THIS TURN'; `pipeline/render_review.py`
+renders every part (incl UNDERSIDE) + the assembly; TEST_PLAN B/C require viewing that set. Automated
+verify (A + puzzle-fit math) is necessary but NOT sufficient — the puzzle-fit math PASSED a visually
+BROKEN assembly.
+- **BODY 4-color (grey dress) = good + verified.** `figurine_body_4color.3mf`.
+- **HAT-ON-HEAD JOIN = BROKEN (do NOT ship as fitting):** the hat sits ~flush on the head, so the cube
+  peg-UP punches through the thin cone + the socket cut notches the apex (dark block on top in
+  assembled_front). Right design: peg DOWN from the hat into a head hole, OR no peg (cone rests on head).
+  Clean re-cut needs the pre-split single-shell figure = a fresh Hunyuan run = a GPU. **VAST CREDIT $0**,
+  so blocked until John funds. Not claiming the hat fits until rebuilt + looked at.
+
 ## NEW DIRECTION (2026-06-05): AI fork — text→2D→3D→4color (this is the `AI` branch)
 
 John judged the math-built renders too splotchy ("you are using math instead of AI... even the simplest
