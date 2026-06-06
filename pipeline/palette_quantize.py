@@ -81,6 +81,16 @@ def main():
     m = trimesh.load(inp, process=False, force="mesh")
     if isinstance(m, trimesh.Scene):
         m = m.to_geometry()
+    # Drop tiny floating components (boolean slivers etc.) so the print mesh is ONE clean solid — Bambu
+    # flags any disconnected piece as a floating region. Weld first so split sees real components.
+    m.merge_vertices()
+    comps = m.split(only_watertight=False)
+    if len(comps) > 1:
+        keep = [c for c in comps if len(c.faces) >= int(os.environ.get("MIN_COMPONENT", "50"))]
+        if keep and len(keep) < len(comps):
+            dropped = len(comps) - len(keep)
+            m = trimesh.util.concatenate(keep) if len(keep) > 1 else keep[0]
+            print(f"[palette] dropped {dropped} tiny floating component(s); kept {len(keep)}")
     vc = vertex_colors_from_texture(m)
     # COLOR PRE-SMOOTHING (the speckle fix): blur per-vertex colors over the mesh surface BEFORE
     # clustering so the texture's patchy artifacts average into coherent zones → contiguous print

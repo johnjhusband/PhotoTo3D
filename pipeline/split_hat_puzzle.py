@@ -103,8 +103,13 @@ def main():
 
     # --- BODY: watertight, + peg, then color from lifelike ---
     body = watertight(mesh.submesh([np.where(~mask)[0]], append=True, repair=False))
-    crown = body.vertices[body.vertices[:, 1] > body.vertices[:, 1].max() - max(2.0, a.peg)]
-    cx, cz, top = crown[:, 0].mean(), crown[:, 2].mean(), body.vertices[:, 1].max()
+    # Peg goes on the HEAD crown under the hat axis — NOT the body's global max (a weapon/staff can be
+    # taller than the head, which would put the peg on the spear tip). Hat is ~axisymmetric: use its
+    # vertex centroid as the axis, then the body's top NEAR that axis as the head crown.
+    hvidx = np.unique(mesh.faces[mask])
+    cx, cz = mesh.vertices[hvidx, 0].mean(), mesh.vertices[hvidx, 2].mean()
+    near = np.hypot(body.vertices[:, 0] - cx, body.vertices[:, 2] - cz) < a.peg * 2.5
+    top = body.vertices[near, 1].max() if near.any() else body.vertices[:, 1].max()
     peg = trimesh.creation.box(extents=(a.peg, a.peg, a.peg))
     peg.apply_translation([cx, top, cz])
     try:
