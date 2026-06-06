@@ -18,19 +18,32 @@ from scipy.spatial import cKDTree
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("input"); ap.add_argument("out")
-    ap.add_argument("--fist", required=True, help="gripping-hand centroid 'x,y,z' (mesh units)")
+    ap.add_argument("--fist", default=None, help="gripping-hand centroid 'x,y,z'; omit to AUTO-detect")
     ap.add_argument("--radius", type=float, default=0.05)
     ap.add_argument("--head", type=float, default=0.16, help="spearhead length")
     ap.add_argument("--top", type=float, default=0.18, help="how far above the head the shaft rises")
     ap.add_argument("--dark", default="191512", help="staff color hex")
     a = ap.parse_args()
-    fx, fy, fz = [float(x) for x in a.fist.split(",")]
 
     fig = trimesh.load(a.input, process=False)
     if hasattr(fig, "to_geometry"):
         fig = fig.to_geometry()
     ovc = np.asarray(fig.visual.vertex_colors)[:, :4].copy()
     ov = np.asarray(fig.vertices).copy()
+    if a.fist:
+        fx, fy, fz = [float(x) for x in a.fist.split(",")]
+    else:
+        # AUTO-detect the gripping fist: skin-colored verts (light, warm), forward (high Z), mid-height,
+        # on her right (x below centre). Robust across re-reconstructions of the same reference.
+        ext = ov.max(0) - ov.min(0); cxz = ov[:, [0, 2]].mean(0)
+        rgb = ovc[:, :3].astype(int)
+        skin = (rgb[:, 0] > 140) & (rgb[:, 0] - rgb[:, 2] > 12)
+        sv = ov[skin]
+        mid = sv[(sv[:, 1] > ov[:, 1].min() + 0.35 * ext[1]) & (sv[:, 1] < ov[:, 1].min() + 0.7 * ext[1])]
+        fwd = mid[mid[:, 2] > np.percentile(mid[:, 2], 80)]            # forward-most skin at mid height
+        fwd = fwd[fwd[:, 0] < cxz[0]] if (fwd[:, 0] < cxz[0]).any() else fwd  # prefer her right side
+        fx, fy, fz = fwd.mean(0)
+        print(f"[weapon] auto-fist = ({fx:.3f},{fy:.3f},{fz:.3f}) from {len(fwd)} skin verts", flush=True)
     ymin, ymax = ov[:, 1].min(), ov[:, 1].max()
     shaft_top = ymax + a.top
     h = shaft_top - ymin

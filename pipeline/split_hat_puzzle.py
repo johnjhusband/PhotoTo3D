@@ -77,7 +77,10 @@ def main():
     ap.add_argument("out_dir")
     ap.add_argument("--color", required=True, help="lifelike colored GLB (body's true colors)")
     ap.add_argument("--mm", type=float, default=150.0)
-    ap.add_argument("--peg", type=float, default=10.0)
+    ap.add_argument("--peg", type=float, default=8.0, help="peg diameter (mm) when peg-mode=down")
+    ap.add_argument("--peg-mode", dest="peg_mode", choices=["none", "down"], default="none",
+                    help="none = hat just seats on the head (clean, nothing protrudes); "
+                         "down = peg points DOWN from the hat into a head hole (internal lock)")
     ap.add_argument("--clearance", type=float, default=0.3)
     ap.add_argument("--prefix", default="figurine")
     ap.add_argument("--straw", default="c9a86a", help="hat color hex")
@@ -101,35 +104,42 @@ def main():
     tree = cKDTree(src.vertices)
     straw = np.array([int(a.straw[i:i+2], 16) for i in (0, 2, 4)] + [255], np.uint8)
 
-    # --- BODY: watertight, + peg, then color from lifelike ---
-    body = watertight(mesh.submesh([np.where(~mask)[0]], append=True, repair=False))
-    # Peg goes on the HEAD crown under the hat axis — NOT the body's global max (a weapon/staff can be
-    # taller than the head, which would put the peg on the spear tip). Hat is ~axisymmetric: use its
-    # vertex centroid as the axis, then the body's top NEAR that axis as the head crown.
     hvidx = np.unique(mesh.faces[mask])
     cx, cz = mesh.vertices[hvidx, 0].mean(), mesh.vertices[hvidx, 2].mean()
-    near = np.hypot(body.vertices[:, 0] - cx, body.vertices[:, 2] - cz) < a.peg * 2.5
-    top = body.vertices[near, 1].max() if near.any() else body.vertices[:, 1].max()
-    peg = trimesh.creation.box(extents=(a.peg, a.peg, a.peg))
-    peg.apply_translation([cx, top, cz])
-    try:
-        body = trimesh.boolean.union([body, peg])
-    except Exception as e:
-        print(f"[hatsplit] peg union failed ({e}); body without peg", flush=True)
+
+    # --- BODY: watertight; optional DOWN-peg join ---
+    body = watertight(mesh.submesh([np.where(~mask)[0]], append=True, repair=False))
+    # PEG MODE (default 'none'): a conical hat sits ~FLUSH on the head, so a peg pointing UP from the head
+    # punches through the thin cone and the socket cut notches the apex (the bug John caught). So:
+    #   none = no peg; the hollow hat just seats on the head by its cone shape (clean, nothing protrudes).
+    #   down = peg points DOWN from the hat into a HOLE in the head crown — internal, nothing pokes out.
+    near = np.hypot(body.vertices[:, 0] - cx, body.vertices[:, 2] - cz) < max(a.peg * 2.5, 12)
+    crown = body.vertices[near, 1].max() if near.any() else body.vertices[:, 1].max()
+    if a.peg_mode == "down":
+        # hole down into the head crown (slightly larger than the peg, for clearance)
+        hole = trimesh.creation.cylinder(radius=a.peg/2 + a.clearance, height=a.peg*1.4, sections=24)
+        hole.apply_translation([cx, crown - a.peg*0.5, cz])
+        try:
+            body = trimesh.boolean.difference([body, hole])
+        except Exception as e:
+            print(f"[hatsplit] head-hole cut failed ({e})", flush=True)
     _, idx = tree.query(body.vertices)
     body.visual.vertex_colors = vcs[idx]
     body.export(os.path.join(a.out_dir, f"{a.prefix}_body_colored.glb"))
-    print(f"[hatsplit] body {len(body.faces)}f watertight={body.is_watertight} -> body_colored.glb", flush=True)
+    print(f"[hatsplit] body {len(body.faces)}f watertight={body.is_watertight} peg_mode={a.peg_mode} "
+          f"-> body_colored.glb", flush=True)
 
-    # --- HAT: watertight, - socket, flat straw ---
+    # --- HAT: watertight; optional DOWN-peg ---
     hat = watertight(mesh.submesh([np.where(mask)[0]], append=True, repair=False))
-    hb = hat.vertices[:, 1].min()
-    socket = trimesh.creation.box(extents=(a.peg + 2*a.clearance, a.peg + a.clearance, a.peg + 2*a.clearance))
-    socket.apply_translation([cx, hb + a.peg/2.0, cz])
-    try:
-        hat = trimesh.boolean.difference([hat, socket])
-    except Exception as e:
-        print(f"[hatsplit] socket cut failed ({e}); hat without socket", flush=True)
+    if a.peg_mode == "down":
+        hb = hat.vertices[:, 1].min()
+        # peg hangs down from the hat's inner apex into the head hole (a bit shorter than the hole is deep)
+        peg = trimesh.creation.cylinder(radius=a.peg/2, height=a.peg*1.2, sections=24)
+        peg.apply_translation([cx, crown - a.peg*0.35, cz])
+        try:
+            hat = trimesh.boolean.union([hat, peg])
+        except Exception as e:
+            print(f"[hatsplit] hat-peg union failed ({e})", flush=True)
     hat.visual.vertex_colors = np.tile(straw, (len(hat.vertices), 1))
     from export_color3mf import export_color_3mf
     hv = np.asarray(hat.vertices, np.float64); hf = np.asarray(hat.faces, np.int64)
