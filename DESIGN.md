@@ -92,3 +92,36 @@ reconstructing — never letting the 3D model invent legs. Full prioritized idea
 
 See **STATE.md** for live status. (Architecture: stages 1–4 + slicing automatable by the agent;
 physical print + artistic finishing are John's.)
+
+## Design pattern: split a figure into MULTIPLE PRINTS (for color + assembly)
+
+**Standard thinking for this kind of art (John, 2026-06-06).** A 4-filament printer prints only 4
+colors per object. When a figure wants more colors than that — or you just want color modularity —
+split it into separate prints and assemble them. The HAT was the first one (straw, separate from the
+4-color body). The question every time: **what is EASY to separate AND easy to assemble?**
+
+**Pick parts to separate by this rule:**
+- **GOOD — separate these first.** Parts that are LARGE, RIGID, sit on a NATURAL SEAM, and join with a
+  SIMPLE registration feature (a cube/cylinder peg into a matching socket, or a tab into a slot). They
+  print flat/easily and snap together one way only.
+  - **Hat** — sits on the head, peg-in-socket. (done)
+  - **Staff / weapon** — a rigid rod that drops into a hole in the hand. The EASIEST of all: it barely
+    touches the body (just the grip), prints as a simple rod, and can even be multi-colored on its own.
+  - **Cloak / cape** — a big outer shell. Separating it frees the MOST color budget (it's usually the
+    dominant dark color) and it assembles as an over-layer (rest it on the shoulders / clip at the neck).
+- **BAD — never separate these.** SMALL, THIN, FRAGILE parts, or parts with a hidden/complex interface.
+  They are hard to print and far harder to align and glue.
+  - **Tongue, fingers, thin straps, eye-band.** Keep them attached to whatever larger part they sit on.
+
+**How it solves a color overflow (worked example — the tongue problem):**
+Body wants 5 colors: dark robe, grey dress, skin, blue scarf, red tongue. Don't separate the tongue
+(too small). Instead **separate the CLOAK** (a large dark shell). Now the body underneath needs only 4
+colors — grey dress, skin, blue scarf, red tongue — which fits a 4-filament print. The cloak prints
+separately in dark and goes on like a coat. Total = body(4) + cloak(1) + hat(1).
+
+**Always:**
+1. Add a registration feature so parts fit ONE way and assemble by hand (peg/socket like the hat).
+2. Standard order to consider separating: **hat → weapon → cloak → large accessories.** Stop before
+   anything small/fragile.
+3. Each print gets its own up-to-N colors; total colors = sum across prints.
+4. Tooling: `split_hat_puzzle.py` is the template (detect part by color/region → split → cap → peg/socket).
