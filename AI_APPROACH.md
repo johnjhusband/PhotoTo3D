@@ -86,5 +86,12 @@ Gotchas: (1) hat = highest SAME-COLOR connected component (tan also = sandals, s
 - **Bambu launch:** `env XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 DISPLAY=:0
   DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus flatpak run com.bambulab.BambuStudio <file.3mf>`
   opens it on John's Wayland session with the file loaded.
-- **Snake tongue:** `ref_ai_v3_tongue.png` (prominent forked tongue) running through 3D to test if it
-  survives at 150mm (near the detail limit; the face sits in the hat's shadow).
+- **Snake tongue:** `ref_ai_v3_tongue.png` (prominent forked tongue) → SURVIVED into 3D as real geometry
+  (red forked tongue). Body 4-color: use **LWEIGHT 0.6** so the 4 regions are {dark clothing, skin, blue
+  scarf, red tongue}; the grey dress merges into the dark robe (acceptable, it's under the cloak).
+- **WELDED 3MF FIX (Bambu floating-regions/empty-layers):** the 3MF was exported from the vertex-EXPLODED
+  mesh (polygon soup → Bambu flags floating regions). Fixed: `export_face_color_3mf()` writes a WELDED
+  manifold mesh with one flat color per TRIANGLE (3MF supports per-face color). `palette_quantize.py` +
+  `make_print_files.py` now use it. Verified watertight, 1 component. ALWAYS use welded for the 3MF.
+- **WEAPON (John, from OIP1/OIP2 sources):** she carries a long spear/polearm. `ref_ai_v4_weapon.png`
+  adds it (held vertical, planted beside her) + keeps the tongue → 3D running. Next: welded 5-color split.
