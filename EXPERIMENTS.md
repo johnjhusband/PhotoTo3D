@@ -180,3 +180,18 @@ obviously invented. Judged by me each round against the reference; repeat until 
     hat brim, cloth folds, sandals. Confirmed the "soft face" was largely the noisy delit TEXTURE over OK
     geometry; HD geometry is clearly better. Running full HD paint+repair+color+4color to produce the
     higher-detail final. make_print_files.py builds the scaled print set in one command.
+
+- 2026-06-05 **AI FORK (branch `AI`) — text→2D→3D→5-color, the splotch-free path.** John judged the
+  maths-fork renders too splotchy ("you're using math not AI"). New pipeline:
+  - `gen_ai_reference.py` → gpt-image-1 (OpenAI key in CTO/.env) renders a CLEAN flat-color full-body 2D
+    ref from a vision-synthesized prompt. Text mode for 3D; `--ref` image-conditioned for source style.
+  - Same Hunyuan shape(octree 384)→paint→repair(alpha 360)→4color. Clean 2D in → clean 3D out (no splotch).
+  - Iterations: v1 hands fused to cape (alpha 320) → v2 arms-out + alpha 360 fixed it → v3 added the snake
+    tongue (survived 3D as red geometry) → v4 added a spear/polearm. Image→3D DROPS the thin spear shaft
+    (keeps only the fist), so `add_weapon.py` models a dark staff+spearhead through the gripping hand.
+  - HAT PUZZLE = 5 colors: `split_hat_puzzle.py` splits the hat off; body quantized to 4 (LWEIGHT 0.6 =
+    dark robe+staff / skin / blue scarf / red tongue) + straw hat. Mortise-tenon peg/socket join.
+  - 3MF must be WELDED (per-face color via `export_face_color_3mf`) — the exploded mesh slices as floating
+    regions in Bambu. STLs dropped (3MF is the Bambu deliverable). Bambu installed; .3mf association set.
+  - Deliverable: `AI_out/print_files/hat_puzzle/figurine_body_4color.3mf` + `figurine_hat_straw.3mf`,
+    mirrored to Google Drive via `sync_to_drive.sh`. Full detail in `AI_APPROACH.md`.
