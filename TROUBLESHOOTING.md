@@ -145,3 +145,21 @@ runs through the working TRELLIS path directly (no SDXL, no download fight).
   reaches into the gap instead of bridging). `apose_3d.sh` now honors `REL_ALPHA` env (default 320);
   used 440 for the arms-out v2 reference. Too fine fragments the mesh ("kept largest of N blobs" drops
   pieces), so tune up gradually.
+
+## Bambu won't open when you double-click a .3mf (fresh flatpak install)
+- The flatpak install does NOT register a file association, and is SANDBOXED (can't read ~/Downloads or
+  the repo by default). So double-clicking a .3mf does nothing. Fixes (done 2026-06-05):
+  - Filesystem access: `sudo flatpak override com.bambulab.BambuStudio --filesystem=home`.
+  - Default app: add to `~/.config/mimeapps.list` under [Default Applications] AND [Added Associations]:
+    `model/3mf=com.bambulab.BambuStudio.desktop` and
+    `application/vnd.ms-package.3dmanufacturing-3dmodel+xml=com.bambulab.BambuStudio.desktop`.
+    (A .3mf resolves to `model/3mf` per `xdg-mime query filetype`.) Reopen the file manager to refresh.
+  - `xdg-mime query default` may read empty in a headless SSH shell (no XDG_DATA_DIRS for the DE) even
+    when the entry is correct — it still works in the user's graphical session. Don't chase that.
+  - Always-works fallback: `flatpak run com.bambulab.BambuStudio <file.3mf>` or drag the file onto the window.
+
+## Hat-as-puzzle-piece (print hat separately from the head)
+- `pipeline/split_hat_puzzle.py`: splits the figurine into BODY (skin) + HAT (straw) with a mortise-and-
+  tenon cube join — a peg on the head crown into a socket in the hat underside (clearance ~0.3mm/side for
+  an FDM press-fit). Hat region = the color region with the highest mean Y; keep its largest connected
+  component. Booleans need `manifold3d` (pip). Tune `--peg` and `--clearance` to the print.
