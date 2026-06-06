@@ -27,11 +27,16 @@ AI image generator would be better. We might need a new approach."). Decision: F
   per-triangle color; `palette_quantize.py` + `make_print_files.py` use it. Always weld the 3MF.
 - **TONGUE survived 3D** (v3, red forked tongue). Body 4-color at **LWEIGHT 0.6** = {dark clothing, skin,
   blue scarf, red tongue}.
-- **RUNNING: v4 = WEAPON + tongue** (`ref_ai_v4_weapon.png` — spear/polearm from OIP1/OIP2 sources + the
-  snake tongue) → 3D on box 39639103, `out_ap/_v4.log`. Next: render to confirm weapon survived, welded
-  5-color split (body 4-color + straw hat), update AI_out + Drive, show John.
-- **NOTE:** current `AI_out/print_files` 3MFs are the pre-fix EXPLODED (floating) v2b set — being replaced
-  by the welded v4 set. Don't ship those.
+- **WEAPON: image→3D drops the thin spear shaft** (Hunyuan keeps only the gripping fist). Fix =
+  `pipeline/add_weapon.py`: model a dark cylinder shaft + cone spearhead, thread it through the fist
+  (auto-located: skin verts, forward, mid-height, her right side), union to the figure, color dark so it
+  shares the clothing region. Gotcha: the split's color-transfer + island-removal can repaint the staff
+  skin (it's a dark island bridged to the body only through the skin fist) — force the staff verts dark
+  before the final quantize (ISLAND_MIN=0).
+- **FINAL DELIVERABLE (v4, 2026-06-05):** weapon + snake tongue, 5 colors. `AI_out/print_files/hat_puzzle/`
+  `figurine_body_4color.3mf` (dark robe+staff, skin, blue scarf, red tongue, + peg) + `figurine_hat_straw.3mf`
+  (+ socket), both WELDED manifold (no Bambu floating warning). Renders in `AI_out/3d_renders/`. On Drive.
+  Box 39639103 still up/idle — STOP to halt billing.
 - **Bambu 2.6.0 installed**; loads our 3MF (exit 0); `.3mf`→Bambu association set (gio + home access).
   GUI double-click is John's to confirm. CLI slicer segfaults headless (no display).
 - **Google Drive sync LIVE:** `bash pipeline/sync_to_drive.sh` mirrors `AI_out/` to John's folder.
