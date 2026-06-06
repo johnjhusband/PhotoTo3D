@@ -195,3 +195,18 @@ obviously invented. Judged by me each round against the reference; repeat until 
     regions in Bambu. STLs dropped (3MF is the Bambu deliverable). Bambu installed; .3mf association set.
   - Deliverable: `AI_out/print_files/hat_puzzle/figurine_body_4color.3mf` + `figurine_hat_straw.3mf`,
     mirrored to Google Drive via `sync_to_drive.sh`. Full detail in `AI_APPROACH.md`.
+
+- 2026-06-06 **Cloak-split FAILS; color fixed in the quantizer; done on CPU with $0 vast credit.**
+  John's idea: split the cloak into its own print (like the hat) to free a 4th body color so the grey
+  dress isn't swallowed by the dark. TESTED (locally): it does NOT work. The cloak is fused into the
+  single body shell, so removing the dark faces shatters the body into ~1000 disconnected fragments (a
+  hollow front panel + floating bits, not printable). Only TOPOLOGICALLY DISTINCT parts separate cleanly
+  (hat = cap on top, staff = rod in the hand). DESIGN.md corrected.
+  - Real fix = pick the 4 colors differently, not split geometry. `palette_quantize LWEIGHT 1.6`
+    (lightness-weighted) → {black cloak, grey dress, skin, blue scarf}; the tiny red tongue merges (still
+    there, just dark). Body no longer reads dark. Alternative (red tongue) costs the grey dress its slot.
+  - **Did it all on the laptop with NO GPU and $0 vast credit:** recovered the reconstructed mesh from
+    git history (`git show <sha>:AI_out/3d_models/figurine_assembled.glb`), built a CPU venv
+    (`trimesh lxml pymeshfix manifold3d networkx lib3mf scikit-learn scipy`), ran split/quantize/render +
+    `verify_deliverable.py` locally. LESSON: mesh post-processing (split, quantize, 3MF, render) needs NO
+    GPU — only the original Hunyuan reconstruction does. So color/region iteration is free + boxless.
