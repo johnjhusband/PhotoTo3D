@@ -44,21 +44,28 @@ the exact thing that made early 3D muddy. So: drive the 3D off the FLAT referenc
 treat the moody/photoreal images as the "look" target — OR push the moody one through 3D to see. Awaiting
 John's pick. Snake tongue is in the 2D; at 150 mm it is likely below printable detail (noted before).
 
-## Status — AI FORK VALIDATED END-TO-END (2026-06-05)
-The clean flat AI 2D reference → 3D came out MUCH cleaner than the maths fork: the cloak is one solid
-dark region (no speckled patchwork), hat clean, hands intact, full body. John: "your new-approach
-instinct was right." Splotch essentially solved by clean input. Everything in `AI_out/`:
-- 2D refs: `ref_ai_v1/v2.png` (flat, used for 3D), `ref_source_style.png` + `ref_photoreal.png` (style).
-- 3D renders: `3d_lifelike_front.png`, `3d_4color_front.png`, `3d_lifelike_34.png`.
-- 3D models: `figurine_ai_lifelike.glb`, `figurine_ai_4color.glb`.
-- **Print set (150mm Bambu):** `AI_out/print_files/figurine_ai_4color_150mm.3mf` + `_150mm.stl` +
-  `material1-4_*.stl`. Watertight, 58×150×54 mm. THE AI-fork printable deliverable.
+## Status — AI FORK VALIDATED, hands FIXED, watertight (2026-06-05)
+Clean flat AI 2D ref → 3D is MUCH cleaner than the maths fork (no splotch patchwork). Iterations:
+- v1 (arms-down ref, alpha 320): clean but HANDS FUSED into the cape (alpha-wrap bridged the gap).
+- **v2b (arms-out v2 ref, alpha 360): CURRENT DELIVERABLE** — hands separated from the cape, watertight,
+  island-removal speckle cleanup. (alpha 440 separated hands but broke watertight; 360 is the sweet spot.)
 
-Residual: light speckle on the dark cloak (much less than maths); 4-color lumped the eye/face into the
-blue (can separate with a tuned palette). Snake tongue is 2D-only (too fine at 150mm).
+`AI_out/` is reorganized (2026-06-05, John "clean it up"):
+- `2d_references/` — ref_ai_v1, ref_ai_v2, ref_source_style, ref_photoreal (4 PNGs).
+- `3d_renders/`   — 3d_lifelike_front, 3d_4color_front, 3d_lifelike_34 (the v2b figurine).
+- `3d_models/`    — figurine_ai_lifelike.glb, figurine_ai_4color.glb (v2b).
+- `print_files/`  — figurine_ai_4color_150mm.3mf + _150mm.stl + material1-4_*.stl. Watertight, 58×150×54mm.
 
-## Google Drive sync (John asked to keep an images folder current)
-`pipeline/sync_to_drive.sh` (rclone) mirrors `AI_out/*.png|*.glb` to Drive folder
-`1INrnKYrmYm9DwYDbhvaKUZ_AK9nSjhIu`. BLOCKED on one-time OAuth: John runs `rclone authorize "drive"`,
-pastes the token; then `rclone config create gdrive drive scope=drive root_folder_id=<id> token='<json>'`
-and the script syncs. rclone installed (v1.60.1). Re-run the script after each new image batch.
+Residual: 4-color still lumps skin+dress+legs into one grey region — the HAT-PUZZLE split (separate straw
+hat + skin-tone body) is the path to a real skin tone. Snake tongue is 2D-only (too fine at 150mm).
+Bambu: loads our 3MF (load+re-export exit 0); headless slicer segfaults w/o a display; GUI double-click
+is John's to confirm. .3mf association + home access set (see TROUBLESHOOTING).
+
+## Google Drive sync — LIVE
+`gdrive:` remote (rclone) → folder `1INrnKYrmYm9DwYDbhvaKUZ_AK9nSjhIu`, token in `~/.config/rclone/`.
+`bash pipeline/sync_to_drive.sh` mirrors `AI_out/` (subfolders included). Drive now mirrors the clean
+structure. Re-run after each new batch. Setup details in TROUBLESHOOTING.
+
+## Hat-as-puzzle-piece (in progress)
+`pipeline/split_hat_puzzle.py` — mortise-tenon cube join so the hat prints straw and the body skin tone.
+Booleans (manifold3d) were hanging on the 200k mesh; debugging the fill_holes/boolean step.
