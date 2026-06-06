@@ -12,7 +12,11 @@ off is written here. Read it and you are caught up.
 4. **DECISIONS.md** — settled decisions and *why*. Do not re-litigate these.
 5. **STATE.md** — the live status: what's done, what's running right now, what's next, open questions.
 6. **TROUBLESHOOTING.md** — hard-won install/ops/mesh gotchas and their fixes. Read before debugging.
-7. **README.md** — public-facing overview (lighter than the above).
+7. **TEST_PLAN.md** — the DEFINITION OF DONE. A figurine is not done until it passes all three
+   dimensions (structural / functional / aesthetic). Run `pipeline/verify_deliverable.py` (section A,
+   automated) AND the B/C render-and-eyeball checks before declaring anything finished. Never ship on a
+   green-A alone — function (does the hat seat on the head?) and aesthetics are the other two thirds.
+8. **README.md** — public-facing overview (lighter than the above).
 
 After reading those, you understand what the previous instance understood. Continue from the
 "Next" section of STATE.md.
