@@ -8,8 +8,13 @@ alone; B (function) and C (aesthetics) are where the embarrassing bugs hide.**
 
 How to run: section **A** is automated — `python pipeline/verify_deliverable.py <body.3mf> <hat.3mf>`
 (run it on the EXACT shipped files, not an intermediate). Sections **B** and **C** require rendering and
-LOOKING — render front / 3-4 / side / head-crop / **assembled (body+hat)** with F3D and eyeball each item.
-A check you can't honestly tick is a FAIL.
+LOOKING — and "looking" has a HARD definition (John, 2026-06-06, after I claimed the pieces fit without
+ever rendering the hat): you have NOT looked until you ran `pipeline/render_review.py <dir> <body.glb>
+<hat.glb>` (renders EVERY part front/side/**underside**/top + the **assembled** body+hat), then **Read
+every PNG** and wrote one line of what you see. Automated A + the puzzle-fit MATH are necessary but NOT
+sufficient and are NOT looking — the hat-on-spear and thin-shell-socket bugs both PASSED the math and
+were still wrong. Never tick a B/C item, or write "fits/clean/seats/looks good", without an image you
+viewed THIS turn. A check you can't honestly tick — or haven't looked at — is a FAIL.
 
 ---
 
