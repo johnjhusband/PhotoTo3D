@@ -40,9 +40,12 @@ def main():
     shaft.apply_transform(rot)
     shaft.apply_translation([fx, ymin + h / 2.0, fz])
 
+    # spearhead: cone must POINT UP (apex at top). cone() is base@z0, apex@+z; rotate -90° about X so
+    # local +z -> world +y (apex up), then sit the base at the shaft top. (+90° would invert it into a funnel.)
+    rot_up = trimesh.transformations.rotation_matrix(-np.pi / 2, [1, 0, 0])
     head = trimesh.creation.cone(radius=a.radius * 2.3, height=a.head, sections=28)
-    head.apply_transform(rot)
-    head.apply_translation([fx, shaft_top, fz])  # cone base sits at shaft top, points up
+    head.apply_transform(rot_up)
+    head.apply_translation([fx, shaft_top, fz])  # base at shaft top, apex points up
 
     staff = trimesh.boolean.union([shaft, head])
     combined = trimesh.boolean.union([fig, staff])
