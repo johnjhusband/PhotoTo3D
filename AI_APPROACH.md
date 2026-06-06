@@ -66,6 +66,12 @@ is John's to confirm. .3mf association + home access set (see TROUBLESHOOTING).
 `bash pipeline/sync_to_drive.sh` mirrors `AI_out/` (subfolders included). Drive now mirrors the clean
 structure. Re-run after each new batch. Setup details in TROUBLESHOOTING.
 
-## Hat-as-puzzle-piece (in progress)
-`pipeline/split_hat_puzzle.py` — mortise-tenon cube join so the hat prints straw and the body skin tone.
-Booleans (manifold3d) were hanging on the 200k mesh; debugging the fill_holes/boolean step.
+## Hat-as-puzzle-piece — DONE
+`pipeline/split_hat_puzzle.py` splits the figurine into BODY (skin) + HAT (straw) with a mortise-tenon
+cube join: a 10mm cube peg on the head crown (unioned to body) + a matching socket (0.3mm/side clearance)
+in the hat underside. Both parts watertight. Outputs: `AI_out/print_files/hat_puzzle/figurine_body_150mm.stl`
++ `figurine_hat_150mm.stl`; renders `AI_out/3d_renders/hatpuzzle_{body_with_peg,hat_socket}.png`.
+Gotchas that cost time: (1) detect the hat as the highest SAME-COLOR connected component (the tan color
+also paints the sandals, so region-mean-Y picks the scarf); (2) the 4-color GLB is vertex-EXPLODED, so
+`merge_vertices()` first or face_adjacency is empty; (3) `trimesh.repair.fill_holes` HANGS on big
+openings — use `pymeshfix.clean_from_arrays` instead; (4) booleans need `manifold3d` (pip).
