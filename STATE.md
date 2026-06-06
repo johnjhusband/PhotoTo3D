@@ -12,17 +12,21 @@ AI image generator would be better. We might need a new approach."). Decision: F
 - **`AI` branch** (current) = the new approach: a vision model (me) inspects the 6 `candidates/` images,
   writes ONE clean text prompt, a text-to-image AI renders a crisp FLAT-COLOR full-body 2D reference,
   then the SAME Hunyuan image→3D + palette-to-4 finish the job. Clean input → clean 3D → trivial 4-color.
-- **2D stage WORKS:** `pipeline/gen_ai_reference.py` → OpenAI **gpt-image-1** (key in `CTO/.env`, ~3¢/img)
-  → `AI_out/ref_ai_v1.png` — clean, flat, full-body, all signature features, plain bg. Far better than
-  the math 2D. See `AI_APPROACH.md` for the full plan + the cheap-image-gen research.
-- **RUNNING NOW:** the AI ref through `apose_3d.sh` (Hunyuan HD shape → paint → repair → 4color) on box
-  39639103. Monitoring `out_ap/_ai3d.log` for APOSE3D_DONE. Next: pull, judge whether the clean input
-  removed the splotch in 3D, build 150mm print set, show John.
-- **Bambu Studio 2.6.0 installed** locally (flatpak, Flathub). 3MF IS Bambu's native format (the format
-  was never the problem — the spots were). Bambu CLI can slice headless (`--slice 0 --export-png`) but
-  needs a printer preset for full output; not blocking.
-- Tooling added to `maths`/shared: `pipeline/make_print_files.py` (one-command scaled print set),
-  `palette_quantize.py` ISLAND_MIN speckle/island removal, octree-384 default, pipeline output guards.
+**Full detail of the AI fork lives in `AI_APPROACH.md` — read it. Summary of current state:**
+- **2D:** `pipeline/gen_ai_reference.py` → gpt-image-1 (key in `CTO/.env`, ~3¢/img). Text mode = flat
+  clean (best for 3D); `--ref` image-conditioned = source-style. 4 refs in `AI_out/2d_references/`.
+- **3D DELIVERABLE (v2b):** clean flat ref → Hunyuan → repair → 4color = no splotch, hands separated
+  from cape (arms-out v2 ref + alpha 360 = the sweet spot; 320 fused hands, 440 broke watertight),
+  watertight. In `AI_out/`: `3d_renders/`, `3d_models/`, `print_files/figurine_ai_*_150mm.{stl,3mf}`.
+- **HAT PUZZLE DONE:** `pipeline/split_hat_puzzle.py` → body+peg / hat+socket (mortise-tenon, 0.3mm
+  clearance), both watertight, in `AI_out/print_files/hat_puzzle/`. Print body skin, hat straw, press-fit.
+- **Bambu 2.6.0 installed**; loads our 3MF (exit 0); `.3mf`→Bambu association set (gio + home access).
+  GUI double-click is John's to confirm. CLI slicer segfaults headless (no display).
+- **Google Drive sync LIVE:** `bash pipeline/sync_to_drive.sh` mirrors `AI_out/` to John's folder.
+- **Filesystem cleaned + reorganized** (`AI_out/{2d_references,3d_renders,3d_models,print_files}`); the
+  Stop hook `phototo3d_cleanup.sh` now deletes scratch + archives uncertain files to `archive/<date>/`.
+- **OPEN (John's call):** flat vs moody source-style for the figurine; stop the idle box 39639103.
+- Shared tooling: `make_print_files.py`, `palette_quantize.py` ISLAND_MIN, octree-384 default, stage guards.
 
 ---
 ### (prior — maths fork history below)
