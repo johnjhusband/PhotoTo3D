@@ -134,3 +134,14 @@ runs through the working TRELLIS path directly (no SDXL, no download fight).
   `"error_string":"Success."` and `return_code:0` when it slices. The flatpak is SANDBOXED — the input
   file must be under $HOME (not /tmp) or pass `--filesystem=`. `--export-png 0` needs a printer/process
   preset loaded (`--load-settings`) to actually emit the image.
+
+## Alpha-wrap bridges hands to the cape (webbed mass)
+- Symptom: in the watertight figurine, the HANDS are fused into the cloak — no daylight between the
+  fingers and the fabric; the hand+cape are one webbed blob (John spotted it 2026-06-05).
+- Cause: alpha-wrap makes ONE solid shell. Where two surfaces (a hand and the cape) sit closer than the
+  wrap's alpha "ball", it can't fit between them so it BRIDGES the gap into solid material.
+- Fix (two levers, use both): (1) generate the 2D reference with arms held AWAY from the body (a real
+  A-pose gap), not hanging against the cloak; (2) raise `REL_ALPHA` (finer alpha = smaller ball that
+  reaches into the gap instead of bridging). `apose_3d.sh` now honors `REL_ALPHA` env (default 320);
+  used 440 for the arms-out v2 reference. Too fine fragments the mesh ("kept largest of N blobs" drops
+  pieces), so tune up gradually.

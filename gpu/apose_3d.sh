@@ -30,7 +30,9 @@ log "4) detail-preserving repair (finer alpha to keep face/hands; lighter decima
 # NOTE: do NOT hide the full output behind a narrow grep — a crash AFTER "watertight solid"
 # (e.g. in color-transfer) would be invisible and the pipeline would "succeed" with no file.
 # Keep a full log and GUARD the actual deliverable.
-REL_ALPHA=320 python pipeline/repair_mesh.py "$MESH" out_ap/printable 300000 2>&1 | tee out_ap/_repair.log | grep -aE "repair\]|watertight|Error|Traceback" | tail -8
+# REL_ALPHA env-overridable: HIGHER = finer alpha = the wrap fits into narrow gaps (e.g. between a
+# hand and the cape) instead of BRIDGING them into one webbed mass. Default 320; raise for hands-near-body.
+REL_ALPHA="${REL_ALPHA:-320}" python pipeline/repair_mesh.py "$MESH" out_ap/printable 300000 2>&1 | tee out_ap/_repair.log | grep -aE "repair\]|watertight|Error|Traceback" | tail -8
 [ -f out_ap/printable_color.glb ] || { echo "REPAIR_FAILED: no printable_color.glb (see out_ap/_repair.log)"; tail -20 out_ap/_repair.log; exit 1; }
 
 log "5) gentle color + 4-color + lifelike full-color"
