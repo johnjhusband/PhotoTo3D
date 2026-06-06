@@ -129,6 +129,14 @@ runs through the working TRELLIS path directly (no SDXL, no download fight).
   is the cleaner path.) Run: `flatpak run com.bambulab.BambuStudio`.
 - **3MF IS Bambu's native project format** — it opens our color 3MF in color. The format was never the
   problem; the texture spots were (a maths-fork artifact). Don't switch away from 3MF for Bambu.
+- **"This 3MF is not from Bambu Studio, load geometry and color data only" — NORMAL, not an error.** Our
+  3MF is a standard color 3MF (lib3mf), not a Bambu project, so Bambu imports geometry + per-face color
+  only (no Bambu print settings). Click through. Bambu 2.5+ then shows a **"Standard 3MF Import Color"**
+  dialog that maps our face colors into its Color Painting system — accept it. The figure appears in its
+  N colors; the top-right filament list shows them; the user assigns each color to an AMS slot (the print
+  color is chosen there, not by our preview hex). Bambu reads VERTEX + FACE color but NOT texture maps;
+  supports up to 32 colors. Caveat: on non-Bambu files the auto color-mapping can occasionally mis-assign
+  a region — eyeball the regions before slicing. Our body 3MF = 4 colors, hat 3MF = 1 (straw) = 5 total.
 - Validate a 3MF slices, headless: `flatpak run --filesystem=home com.bambulab.BambuStudio --arrange 1
   --orient 1 --slice 0 --outputdir <dir> <file.3mf>` → writes `result.json` to CWD with
   `"error_string":"Success."` and `return_code:0` when it slices. The flatpak is SANDBOXED — the input
