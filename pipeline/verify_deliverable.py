@@ -71,6 +71,42 @@ def check_part(path, expect_colors, mm, is_full):
     return ok
 
 
+def _load(path):
+    m = trimesh.load(path)
+    return m.to_geometry() if hasattr(m, "to_geometry") else m
+
+
+def check_fit(body_path, hat_path):
+    """B-PUZZLE FIT: the parts must interlock like a puzzle when placed at their shared coords —
+    the hat must seat ON THE HEAD (head fills the hat, crown reaches the hat's inner top), NOT float,
+    sink, or sit off on the spear tip. (This is the automated version of the hat-on-spear bug.)"""
+    print("\n=== PUZZLE FIT: body + hat ===")
+    body, hat = _load(body_path), _load(hat_path)
+    hv = hat.vertices
+    cx, cz = float(hv[:, 0].mean()), float(hv[:, 2].mean())          # hat axis
+    hlo, hhi = float(hv[:, 1].min()), float(hv[:, 1].max())
+    R = 0.25 * float(max(np.ptp(hv[:, 0]), np.ptp(hv[:, 2])))        # ~quarter of the brim width
+    d = np.hypot(body.vertices[:, 0] - cx, body.vertices[:, 2] - cz)
+    near = body.vertices[d < max(R, 8.0)]
+    ok = True
+    def rec(name, passed, detail=""):
+        nonlocal ok; ok = ok and passed
+        print(f"  [{'PASS' if passed else 'FAIL'}] {name}{'  — ' + detail if detail else ''}")
+    # 1. the head must actually be inside the hat (body geometry within the hat footprint + Y span)
+    inside = near[(near[:, 1] >= hlo) & (near[:, 1] <= hhi)]
+    rec("head sits inside the hat (not off on the spear / not floating)",
+        len(inside) > 200, f"{len(inside)} body verts under the hat axis within its height")
+    # 2. the head crown / peg must reach the hat's inner top (so the peg enters the socket)
+    crown = float(near[:, 1].max()) if len(near) else -1e9
+    rec("crown/peg reaches the hat's inner top (peg in socket)",
+        hlo <= crown <= hhi + 3.0, f"crown Y {crown:.1f} vs hat Y [{hlo:.1f},{hhi:.1f}]")
+    # 3. hat centered over the head, not off-axis (the spear tip is far from the body centre)
+    bxz = body.vertices[:, [0, 2]].mean(0)
+    off = float(np.hypot(cx - bxz[0], cz - bxz[1]))
+    rec("hat centered over the head (not off-axis)", off < 25.0, f"hat axis {off:.1f}mm from body centre")
+    return ok
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("parts", nargs="+", help="3MF files. Name a body part *body* (expects 4 colors), "
@@ -84,7 +120,12 @@ def main():
         expect = 4 if is_body else (1 if "hat" in low else None)
         # the body spans the full figure height; the hat is a sub-part
         allok = check_part(p, expect, a.mm, is_full=is_body) and allok
-    print("\n" + ("ALL CHECKS PASSED (section A). Now do B + C by eye." if allok
+    # PUZZLE-FIT: if a body part and a hat part are both present, they must mate like a puzzle.
+    bp = next((p for p in a.parts if "body" in os.path.basename(p).lower()), None)
+    hp = next((p for p in a.parts if "hat" in os.path.basename(p).lower()), None)
+    if bp and hp:
+        allok = check_fit(bp, hp) and allok
+    print("\n" + ("ALL CHECKS PASSED (A + puzzle-fit). Now do the rest of B + C by eye." if allok
                   else "FAILURES above — FIX before delivering."))
     sys.exit(0 if allok else 1)
 

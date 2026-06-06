@@ -36,6 +36,7 @@ Each printable part (body 3MF, hat 3MF) must pass:
 | B5 | Min feature printable | thinnest wall/feature ≥ ~0.8 mm at target scale; flag thin cape edge / tongue / spear shaft | thin cape truncated; tongue "too fine"; spear shaft dropped by image→3D |
 | B6 | Grounded / printable pose | parts sit on the plate; staff planted, not floating mid-air | unsupported geometry |
 | B7 | Right color COUNT per part | body=4 filaments (fits a 4-AMS), hat=1 (the 5th) — total 5 | tried to put 5 colors on one 4-filament print |
+| B8 | **PUZZLE FIT — the pieces interlock like a puzzle.** Place the parts at their shared coords: the hat must seat ON the head (head fills the hat, crown/peg reaches the hat's inner top, hat centered over the head — NOT floating, sunk, or off on the spear tip). Automated by `verify_deliverable.py` when a body + a hat 3MF are both passed; ALSO eyeball the assembled render. | hat-on-spear-tip (peg placed on the spear); hat floats/sinks; peg≠socket |
 
 ## C. AESTHETIC  (looks like the character, by eye, against `candidates/`)
 | # | Check | Defect it traces to |
