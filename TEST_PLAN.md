@@ -50,6 +50,7 @@ Each printable part (body 3MF, hat 3MF) must pass:
 | C8 | Face legible — eyes/eye-band/mouth read at 150 mm | soft face at full-body scale; bg-removal clipping the pale face |
 | C9 | Snake tongue visible (2D + 3D), printable thickness | tongue too fine; tongue missing |
 | C10 | No stray geometry / artifacts / speckle / floating bits visible | boolean slivers; render speckle |
+| C11 | **The render you SHOW John is the CLEAN 4-color print version** — never the lifelike preview (it carries Hunyuan texture speckle and looks unacceptable). LOOK at the exact image before sending. | shipped a speckly lifelike render as a deliverable |
 
 ---
 
