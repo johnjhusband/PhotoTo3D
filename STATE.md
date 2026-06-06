@@ -48,7 +48,11 @@ AI image generator would be better. We might need a new approach."). Decision: F
   Stop hook `phototo3d_cleanup.sh` now deletes scratch + archives uncertain files to `archive/<date>/`.
 - **BOXES (I manage these now — never ask John):** destroyed dead boxes 39215079 + 39505355 (2026-06-06); only **39639103** remains, STOPPED (restart currently blocked: 'resources unavailable' — slot taken). Storage-fee only. Re-bootstrap via `bootstrap_fresh.sh` if it won't come back.
 - **DELIVERABLE RENDERS = clean 4-color ONLY.** The lifelike preview is speckly (Hunyuan texture noise) — NEVER ship it. The Stop cleanup hook now auto-deletes `*lifelike*` from `AI_out/3d_renders` + sweeps my /tmp+$HOME scratch. Current clean renders: `figurine_{body_4color,hat}_CURRENT.png`. See TEST_PLAN C11.
-- **OPEN (John's call):** flat vs moody source-style for the figurine; stop the idle box 39639103.
+- **OPEN (John's call):** the body reads dark because the red tongue takes a 4th color slot from the grey
+  dress. RECOMMENDED FIX (documented in DESIGN.md 'split into multiple prints'): separate the CLOAK as its
+  own dark print — then the body needs only 4 colors (grey dress, skin, blue scarf, red tongue) and the
+  cloak goes on as an over-layer. NEVER separate the tongue (too small/fragile). Order to consider:
+  hat -> weapon -> cloak -> accessories. Awaiting John's 'go' to build the cloak split (needs a box).
 - Shared tooling: `make_print_files.py`, `palette_quantize.py` ISLAND_MIN, octree-384 default, stage guards.
 
 ---
