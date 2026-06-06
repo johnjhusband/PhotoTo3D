@@ -1,32 +1,33 @@
 #!/usr/bin/env python3
-"""split_hat_puzzle.py — split the figurine into HAT + BODY as a mortise-and-tenon puzzle.
+"""split_hat_puzzle.py — split the figurine into a 4-COLOR BODY + a STRAW HAT (5 colors total),
+joined by a mortise-and-tenon cube (peg on the head crown into a socket in the hat underside).
 
-John's design: print the hat separately (straw color) from the head/body (skin tone), joined by a
-registration cube — a TENON (peg) cube on the crown of the head that slots into a MORTISE (socket) cube
-cut into the hat's underside, with a small clearance for a hand-press fit.
+Why 5 colors: a 4-filament printer does the BODY in 4 colors; the HAT prints separately in a 5th
+(straw) and presses on. STL carries no color, so every output here is a color 3MF.
 
-Pipeline:
-  1. Load the colored mesh, scale to TARGET_MM (so peg/clearance are in real mm).
-  2. Identify the HAT region: the color region whose faces sit highest (max mean Z); keep its largest
-     connected component (so stray same-color faces, e.g. sandals, don't come along).
-  3. Split into hat_faces / body_faces; fill the boundary holes on each so both are watertight solids.
-  4. TENON: a cube on the head crown (centered on the hat/head join, base at the body's top), unioned
-     to the BODY. MORTISE: the same cube grown by CLEARANCE on each side, subtracted from the HAT
-     underside. Assembled, the hat drops onto the peg and registers.
-  5. Export body + hat as separate STL (geometry) and color 3MF.
+Pipeline (geometry first, color last — manifold booleans drop vertex color, so we re-transfer after):
+  1. Load the 4-color GLB (clean discrete colors → robust hat detection) + the lifelike GLB (--color
+     source for the body's true colors). Same geometry; scale both to TARGET_MM identically.
+  2. Hat = highest SAME-COLOR connected component (the tan also paints the sandals, so a plain
+     region-mean fails). Weld verts first (the 4-color GLB is vertex-exploded → no adjacency otherwise).
+  3. BODY = rest → watertight (pymeshfix) → union a cube peg on the head crown → transfer lifelike color
+     by nearest vertex (peg picks up the head color) → export body_colored.glb.
+  4. HAT → watertight → subtract the socket cube (peg + clearance) → flat straw → export hat_straw.3mf.
+Then run palette_quantize on body_colored.glb (N=4) to get body_4color.3mf. The hat 3MF is one color.
 
-Booleans use trimesh's manifold backend (pip install manifold3d).
-Usage: split_hat_puzzle.py <colored.glb> <out_dir> [--mm 150] [--peg 10] [--clearance 0.3] [--prefix figurine]
+Usage: split_hat_puzzle.py <4color.glb> --color <lifelike.glb> <out_dir>
+       [--mm 150] [--peg 10] [--clearance 0.3] [--prefix figurine] [--straw c9a86a]
 """
 import os, sys, argparse
 import numpy as np
 import trimesh
+from scipy.spatial import cKDTree
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "gpu"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
-def load_scaled(path, mm):
+def load_colored(path):
     m = trimesh.load(path, process=False)
     if isinstance(m, trimesh.Scene):
         m = m.to_geometry()
@@ -34,119 +35,103 @@ def load_scaled(path, mm):
     if isinstance(vis, trimesh.visual.TextureVisuals):
         vis = vis.to_color()
     vc = np.asarray(getattr(vis, "vertex_colors", np.empty((0, 4))))
-    longest = float(np.max(m.extents))
-    s = mm / longest
-    m.apply_translation(-m.bounding_box.centroid)
-    m.apply_scale(s)
+    if vc.dtype.kind == "f":
+        vc = np.clip(np.round(vc * 255), 0, 255).astype(np.uint8)
+    if vc.size and vc.shape[1] == 3:
+        vc = np.hstack([vc, np.full((len(vc), 1), 255, np.uint8)])
     return m, vc
 
 
-def hat_face_mask(mesh, vcolors):
-    """Identify hat faces = the highest SAME-COLOR connected component.
-
-    Picking the highest color *region* fails: the hat-tan also colors the sandals at the bottom, so the
-    region mean drops below the scarf. Instead, split each color region into connected components (edges
-    only between same-color faces), then take the sizable component whose centroid sits highest = the hat.
-    """
-    # per-face color from the EXPLODED mesh (each face's corner-0 color), captured BEFORE welding
-    fcol = vcolors[mesh.faces][:, 0, :3]
+def hat_mask(mesh, fcol):
+    """Face mask of the hat = highest sizable same-color connected component."""
     uniq, inv = np.unique(fcol, axis=0, return_inverse=True)
-    # the 4-color GLB is vertex-exploded (no shared verts) -> face_adjacency is empty. Weld coincident
-    # vertices so adjacency works; merge_vertices keeps face count/order so `inv` (per-face) still aligns.
-    mesh.merge_vertices()
-    fy = mesh.triangles_center[:, 1]                      # Y up
-    adj = mesh.face_adjacency                             # pairs of touching faces
-    same = inv[adj[:, 0]] == inv[adj[:, 1]]               # same-color adjacency
     from scipy.sparse import csr_matrix
     from scipy.sparse.csgraph import connected_components
+    adj = mesh.face_adjacency
+    same = inv[adj[:, 0]] == inv[adj[:, 1]]
     nf = len(mesh.faces)
     e = adj[same]
     G = csr_matrix((np.ones(len(e)), (e[:, 0], e[:, 1])), shape=(nf, nf))
     ncomp, comp = connected_components(G, directed=False)
     sizes = np.bincount(comp, minlength=ncomp)
-    big = np.where(sizes >= max(200, 0.01 * nf))[0]       # ignore tiny specks
-    # highest centroid among sizable components
+    fy = mesh.triangles_center[:, 1]
+    big = np.where(sizes >= max(200, 0.01 * nf))[0]
     best = max(big, key=lambda c: fy[comp == c].mean())
-    mask = comp == best
-    return mask, uniq[inv[np.where(mask)[0][0]]]
+    return comp == best
 
 
-def watertight_part(mesh, face_mask):
-    """Submesh of face_mask, keep its largest piece, close holes robustly with pymeshfix -> watertight."""
+def watertight(part):
     import pymeshfix
-    idx = np.where(face_mask)[0]
-    part = mesh.submesh([idx], append=True, repair=False)
-    comps = part.split(only_watertight=False)
-    if comps:
-        part = max(comps, key=lambda c: len(c.faces))
     part.merge_vertices()
     v = np.asarray(part.vertices, np.float64)
     f = np.asarray(part.faces, np.int32)
-    vclean, fclean = pymeshfix.clean_from_arrays(v, f)   # closes holes -> watertight solid
-    out = trimesh.Trimesh(vertices=vclean, faces=fclean, process=False)
+    vc, fc = pymeshfix.clean_from_arrays(v, f)
+    out = trimesh.Trimesh(vertices=vc, faces=fc, process=False)
     trimesh.repair.fix_normals(out)
     return out
 
 
-def cube(center, edge, height=None):
-    """Axis-aligned box centered at center in X/Z, sitting with given edge (and optional height in Y)."""
-    h = height if height is not None else edge
-    b = trimesh.creation.box(extents=(edge, h, edge))
-    b.apply_translation(center)
-    return b
-
-
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("input"); ap.add_argument("out_dir")
+    ap.add_argument("input", help="4-color GLB (hat detection)")
+    ap.add_argument("out_dir")
+    ap.add_argument("--color", required=True, help="lifelike colored GLB (body's true colors)")
     ap.add_argument("--mm", type=float, default=150.0)
-    ap.add_argument("--peg", type=float, default=10.0, help="tenon cube edge in mm")
-    ap.add_argument("--clearance", type=float, default=0.3, help="per-side mortise clearance in mm")
+    ap.add_argument("--peg", type=float, default=10.0)
+    ap.add_argument("--clearance", type=float, default=0.3)
     ap.add_argument("--prefix", default="figurine")
+    ap.add_argument("--straw", default="c9a86a", help="hat color hex")
     a = ap.parse_args()
     os.makedirs(a.out_dir, exist_ok=True)
 
-    mesh, vc = load_scaled(a.input, a.mm)
-    if vc.shape[0] != len(mesh.vertices):
-        sys.exit("[hatsplit] need per-vertex colors (use the 4-color GLB)")
+    mesh, vc4 = load_colored(a.input)
+    src, vcs = load_colored(a.color)
+    # common scale to mm (both share geometry → same centroid/extent)
+    center = mesh.bounding_box.centroid.copy()
+    scale = a.mm / float(mesh.extents.max())
+    for m in (mesh, src):
+        m.apply_translation(-center); m.apply_scale(scale)
 
-    mask, hatrgb = hat_face_mask(mesh, vc)
-    print(f"[hatsplit] hat region #{'%02x%02x%02x' % tuple(int(x) for x in hatrgb)}: "
-          f"{int(mask.sum())}/{len(mesh.faces)} faces")
+    fcol = vc4[mesh.faces][:, 0, :3]
+    mesh.merge_vertices()
+    mask = hat_mask(mesh, fcol)
+    print(f"[hatsplit] hat {int(mask.sum())}/{len(mesh.faces)} faces", flush=True)
 
-    hat = watertight_part(mesh, mask)
-    body = watertight_part(mesh, ~mask)
-    print(f"[hatsplit] hat {len(hat.faces)}f watertight={hat.is_watertight}; "
-          f"body {len(body.faces)}f watertight={body.is_watertight}")
+    # lifelike color lookup (mm frame)
+    tree = cKDTree(src.vertices)
+    straw = np.array([int(a.straw[i:i+2], 16) for i in (0, 2, 4)] + [255], np.uint8)
 
-    # join point: top of the BODY (head crown), centered on the body's top-area XZ
-    by = body.vertices[:, 1]
-    top_band = body.vertices[by > by.max() - max(2.0, a.peg)]     # top slab of the head
-    cx, cz = top_band[:, 0].mean(), top_band[:, 2].mean()
-    body_top = by.max()
-
-    # TENON: cube peg rising from the head crown; half embedded in head, half proud
-    peg_h = a.peg
-    peg_center = np.array([cx, body_top, cz])                      # box center at the crown surface
-    peg = cube(peg_center, a.peg, height=peg_h)
-    # MORTISE: peg grown by clearance, subtracted from the hat underside at the same XZ
-    hat_bottom = hat.vertices[:, 1].min()
-    socket = cube(np.array([cx, hat_bottom + peg_h / 2.0, cz]),
-                  a.peg + 2 * a.clearance, height=peg_h + a.clearance)
-
+    # --- BODY: watertight, + peg, then color from lifelike ---
+    body = watertight(mesh.submesh([np.where(~mask)[0]], append=True, repair=False))
+    crown = body.vertices[body.vertices[:, 1] > body.vertices[:, 1].max() - max(2.0, a.peg)]
+    cx, cz, top = crown[:, 0].mean(), crown[:, 2].mean(), body.vertices[:, 1].max()
+    peg = trimesh.creation.box(extents=(a.peg, a.peg, a.peg))
+    peg.apply_translation([cx, top, cz])
     try:
-        body_j = trimesh.boolean.union([body, peg])
-        hat_j = trimesh.boolean.difference([hat, socket])
+        body = trimesh.boolean.union([body, peg])
     except Exception as e:
-        print(f"[hatsplit] boolean failed ({e}); install manifold3d. Exporting parts WITHOUT the join.")
-        body_j, hat_j = body, hat
+        print(f"[hatsplit] peg union failed ({e}); body without peg", flush=True)
+    _, idx = tree.query(body.vertices)
+    body.visual.vertex_colors = vcs[idx]
+    body.export(os.path.join(a.out_dir, f"{a.prefix}_body_colored.glb"))
+    print(f"[hatsplit] body {len(body.faces)}f watertight={body.is_watertight} -> body_colored.glb", flush=True)
 
-    mm = int(round(a.mm))
-    for name, part in (("body", body_j), ("hat", hat_j)):
-        stl = os.path.join(a.out_dir, f"{a.prefix}_{name}_{mm}mm.stl")
-        part.export(stl)
-        print(f"[hatsplit] wrote {stl}  ({len(part.faces)}f, watertight={part.is_watertight})")
-    print(f"[hatsplit] peg {a.peg}mm cube, {a.clearance}mm/side clearance — hat prints straw, body skin.")
+    # --- HAT: watertight, - socket, flat straw ---
+    hat = watertight(mesh.submesh([np.where(mask)[0]], append=True, repair=False))
+    hb = hat.vertices[:, 1].min()
+    socket = trimesh.creation.box(extents=(a.peg + 2*a.clearance, a.peg + a.clearance, a.peg + 2*a.clearance))
+    socket.apply_translation([cx, hb + a.peg/2.0, cz])
+    try:
+        hat = trimesh.boolean.difference([hat, socket])
+    except Exception as e:
+        print(f"[hatsplit] socket cut failed ({e}); hat without socket", flush=True)
+    hat.visual.vertex_colors = np.tile(straw, (len(hat.vertices), 1))
+    from export_color3mf import export_color_3mf
+    hv = np.asarray(hat.vertices, np.float64); hf = np.asarray(hat.faces, np.int64)
+    export_color_3mf(hv, hf, np.tile(straw, (len(hat.vertices), 1)), os.path.join(a.out_dir, f"{a.prefix}_hat_straw.3mf"))
+    hat.export(os.path.join(a.out_dir, f"{a.prefix}_hat_colored.glb"))
+    print(f"[hatsplit] hat {len(hat.faces)}f watertight={hat.is_watertight} -> hat_straw.3mf (#{a.straw})", flush=True)
+    print(f"[hatsplit] DONE. Next: palette_quantize body_colored.glb -> body 4-color 3mf.", flush=True)
 
 
 if __name__ == "__main__":
