@@ -66,12 +66,25 @@ is John's to confirm. .3mf association + home access set (see TROUBLESHOOTING).
 `bash pipeline/sync_to_drive.sh` mirrors `AI_out/` (subfolders included). Drive now mirrors the clean
 structure. Re-run after each new batch. Setup details in TROUBLESHOOTING.
 
-## Hat-as-puzzle-piece — DONE
-`pipeline/split_hat_puzzle.py` splits the figurine into BODY (skin) + HAT (straw) with a mortise-tenon
-cube join: a 10mm cube peg on the head crown (unioned to body) + a matching socket (0.3mm/side clearance)
-in the hat underside. Both parts watertight. Outputs: `AI_out/print_files/hat_puzzle/figurine_body_150mm.stl`
-+ `figurine_hat_150mm.stl`; renders `AI_out/3d_renders/hatpuzzle_{body_with_peg,hat_socket}.png`.
-Gotchas that cost time: (1) detect the hat as the highest SAME-COLOR connected component (the tan color
-also paints the sandals, so region-mean-Y picks the scarf); (2) the 4-color GLB is vertex-EXPLODED, so
-`merge_vertices()` first or face_adjacency is empty; (3) `trimesh.repair.fill_holes` HANGS on big
-openings — use `pymeshfix.clean_from_arrays` instead; (4) booleans need `manifold3d` (pip).
+## Hat-as-puzzle-piece — DONE (5 colors: 4 body + 1 straw hat)
+John: 4 colors on the person + 1 on the hat = 5. STLs are NOT useful (no color; Bambu wants 3MF) — all
+outputs are color 3MF now. `pipeline/split_hat_puzzle.py <4color.glb> --color <lifelike.glb> <out>`:
+splits the hat off (highest same-color connected component), keeps the BODY's true colors, adds a 10mm
+cube peg on the head crown, then `palette_quantize` the body to 4 (use **LWEIGHT=0.25** so the small blue
+scarf survives instead of being swallowed by the dark robe), and flat-straws the HAT with a socket
+(peg+clearance). Outputs `AI_out/print_files/hat_puzzle/figurine_body_4color.3mf` + `figurine_hat_straw.3mf`;
+renders `AI_out/3d_renders/hatpuzzle_{body_4color,hat_straw}.png`. Print body on the 4-filament AMS, hat
+in straw, press the peg into the socket.
+Gotchas: (1) hat = highest SAME-COLOR connected component (tan also = sandals, so region-mean-Y fails);
+(2) the 4-color GLB is vertex-EXPLODED → `merge_vertices()` first or face_adjacency is empty;
+(3) `trimesh.repair.fill_holes` HANGS on big openings → use `pymeshfix.clean_from_arrays`;
+(4) booleans need `manifold3d` and DROP vertex color → do geometry first, re-transfer color (cKDTree) last.
+
+## Notes (2026-06-05 eve)
+- **STLs dropped** as deliverables (no color; redundant with 3MF for Bambu). Removed from `AI_out/` + Drive.
+  `make_print_files.py` still emits them for the non-puzzle path; the puzzle path is 3MF-only.
+- **Bambu launch:** `env XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-0 DISPLAY=:0
+  DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus flatpak run com.bambulab.BambuStudio <file.3mf>`
+  opens it on John's Wayland session with the file loaded.
+- **Snake tongue:** `ref_ai_v3_tongue.png` (prominent forked tongue) running through 3D to test if it
+  survives at 150mm (near the detail limit; the face sits in the hat's shadow).
