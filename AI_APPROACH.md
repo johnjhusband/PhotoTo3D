@@ -30,8 +30,20 @@ trivial 4-color reduction.
 - Flux Schnell / Flux 2 Flex (fal.ai, Replicate, SiliconFlow) — $0.003–0.015/image, better anime style,
   but needs a NEW account/key. Hold in reserve if gpt-image-1 style isn't anime enough.
 
+## Style variants (gen_ai_reference.py supports two modes)
+- **Text-only** (`generations`): flat cel-shade, plain bg — BEST for 3D + 4-color. `ref_ai_v1.png`,
+  `ref_ai_v2.png` (v2 = clear eye-band + bandages + open A-pose).
+- **Image-conditioned** (`--ref <source imgs>` → `edits` endpoint): matches the SOURCE art style.
+  `ref_source_style.png` = moody/painterly, violet-blue, glowing eyes, **forked snake tongue** (John
+  wanted it shown). `ref_photoreal.png` = photorealistic, kept SEPARATE (heavy realism/shadow may not
+  reconstruct in 3D — John's call).
+
+## Key tradeoff (surfaced to John 2026-06-05)
+Flat clean input → clean 3D + easy 4-color. Moody/source-consistent input is dark & low-contrast =
+the exact thing that made early 3D muddy. So: drive the 3D off the FLAT reference for a clean print and
+treat the moody/photoreal images as the "look" target — OR push the moody one through 3D to see. Awaiting
+John's pick. Snake tongue is in the 2D; at 150 mm it is likely below printable detail (noted before).
+
 ## Status
-2D stage validated. `AI_out/ref_ai_v1.png` = first clean output; `AI_out/ref_ai_v2.png` = **chosen
-reference** (stronger prompt: clear blindfold eye-band, visible spiral arm/leg bandages, open A-pose so
-hands reconstruct). v1 is running through 3D as a splotch-check comparison; v2 is the definitive run.
-Next: judge v1 3D → run v2 3D → palette-to-4 → 150mm print set → FINAL on the AI branch.
+2D stage validated, 4 style variants in `AI_out/`. v1 (flat) running through 3D now (clean path).
+Next: judge v1 3D → palette-to-4 → 150mm print set → FINAL on the AI branch (style per John's pick).
