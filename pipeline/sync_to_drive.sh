@@ -11,6 +11,6 @@ SRC="${1:-/home/john/repos/PhotoTo3D/AI_out}"
 REMOTE="${RCLONE_REMOTE:-gdrive:}"
 # images first (what John wants to SEE); GLBs too so the 3D models are backed up.
 rclone copy "$SRC" "$REMOTE" \
-  --include "*.png" --include "*.glb" \
+  --include "*.png" --include "*.glb" --include "*.3mf" --include "*.stl" \
   --transfers 4 --checkers 8 -v 2>&1 | tail -20
 echo "[drive-sync] done -> $REMOTE  ($(ls "$SRC"/*.png 2>/dev/null | wc -l) images)"
