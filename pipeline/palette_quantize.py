@@ -223,12 +223,13 @@ def main():
     flat.export(f"{base}_{N}color.ply")
     print(f"[palette] wrote flat per-face {base}_{N}color.glb/.ply")
 
-    # clean N-region color 3MF (flat corners -> no barycentric interpolation)
+    # clean N-region color 3MF from the WELDED manifold mesh with per-FACE color (NOT the exploded
+    # soup — that slices as floating regions / empty layers in Bambu). 3MF holds color per triangle.
     try:
-        from export_color3mf import export_color_3mf
-        n = export_color_3mf(tri_verts.astype(np.float64), tri_faces.astype(np.int64),
-                             corner_rgba, f"{base}_{N}color.3mf")
-        print(f"[palette] wrote {base}_{N}color.3mf ({n} distinct colors)")
+        from export_color3mf import export_face_color_3mf
+        n = export_face_color_3mf(np.asarray(m.vertices, np.float64),
+                                  np.asarray(faces, np.int64), face_rgb, f"{base}_{N}color.3mf")
+        print(f"[palette] wrote {base}_{N}color.3mf ({n} distinct colors, welded manifold)")
     except Exception as e:
         print(f"[palette] color-3MF skipped ({e})")
 

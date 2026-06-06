@@ -87,6 +87,52 @@ def load_colored_mesh(path):
     return verts, faces, vcolors
 
 
+def export_face_color_3mf(verts, faces, face_colors, out_path):
+    """Write a color 3MF from a WELDED manifold mesh with ONE flat color per TRIANGLE.
+
+    Why: the per-vertex path needs an exploded (vertex-split) mesh to avoid color bleed, but that makes
+    a non-manifold 'polygon soup' that slicers flag as floating regions / empty layers. The 3MF color
+    extension assigns colors per-triangle, so a welded manifold mesh + per-face color gives clean flat
+    colors AND a printable solid. `face_colors` is Mx3 or Mx4 uint8 (one row per face)."""
+    fc = np.asarray(face_colors)
+    if fc.shape[1] == 3:
+        fc = np.hstack([fc, np.full((len(fc), 1), 255, np.uint8)])
+    fc = fc.astype(np.uint8)
+    wrapper = lib3mf.Wrapper()
+    model = wrapper.CreateModel()
+    mesh = model.AddMeshObject()
+    mesh.SetName("colored_mesh")
+    for v in verts:
+        pos = lib3mf.Position()
+        pos.Coordinates = (float(v[0]), float(v[1]), float(v[2]))
+        mesh.AddVertex(pos)
+    for f in faces:
+        tri = lib3mf.Triangle()
+        tri.Indices = (int(f[0]), int(f[1]), int(f[2]))
+        mesh.AddTriangle(tri)
+    color_group = model.AddColorGroup()
+    color_to_pid = {}
+    face_pid = np.empty(len(fc), np.uint32)
+    for i, c in enumerate(fc):
+        key = (int(c[0]), int(c[1]), int(c[2]), int(c[3]))
+        pid = color_to_pid.get(key)
+        if pid is None:
+            pid = color_group.AddColor(wrapper.RGBAToColor(*key))
+            color_to_pid[key] = pid
+        face_pid[i] = pid
+    gid = color_group.GetResourceID()
+    for idx in range(len(faces)):
+        props = lib3mf.TriangleProperties()
+        props.ResourceID = gid
+        p = int(face_pid[idx])
+        props.PropertyIDs = (p, p, p)           # all 3 corners = the face's flat color
+        mesh.SetTriangleProperties(idx, props)
+    mesh.SetObjectLevelProperty(gid, int(face_pid[0]))
+    model.AddBuildItem(mesh, wrapper.GetIdentityTransform())
+    model.QueryWriter("3mf").WriteToFile(out_path)
+    return len(color_to_pid)
+
+
 def export_color_3mf(verts, faces, vcolors, out_path):
     """Write a color 3MF using lib3mf. One ColorGroup, per-triangle corner colors."""
     wrapper = lib3mf.Wrapper()

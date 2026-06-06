@@ -35,7 +35,7 @@ import trimesh
 
 # reuse the lib3mf color writer (lives in gpu/)
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "gpu"))
-from export_color3mf import export_color_3mf  # noqa: E402
+from export_color3mf import export_face_color_3mf  # noqa: E402
 
 
 def load_mesh_with_colors(path):
@@ -107,39 +107,17 @@ def main():
     print(f"[print] scaled x{scale:.4f}: 4-color extents {np.round(mesh.extents, 2)} mm "
           f"({len(mesh.vertices)} v / {len(mesh.faces)} tris)")
 
-    # --- 1) single geometry STL (from the watertight mesh when provided) ---
-    stl_src = geom if geom is not None else mesh
-    if geom is not None:
-        geom.apply_translation(-geom.bounding_box.centroid)
-        geom.apply_scale(scale)
-    stl_path = os.path.join(a.out_dir, f"{a.prefix}_{mm}mm.stl")
-    stl_src.export(stl_path)
-    print(f"[print] wrote {stl_path}  (watertight={stl_src.is_watertight})")
-
-    # --- 2) color 3MF (scaled vertices) ---
+    # --- welded color 3MF (the only deliverable; STLs dropped — no color, and Bambu wants 3MF).
+    # The input 4-color GLB is vertex-EXPLODED; merge_vertices welds it back to a manifold so the 3MF
+    # is one watertight solid (not floating-region soup), with one flat color per triangle.
+    face_rgb = vcolors[mesh.faces][:, 0, :3]             # per-face color (corner 0; flat after quantize)
+    mesh.merge_vertices()
     mf_path = os.path.join(a.out_dir, f"{a.prefix}_4color_{mm}mm.3mf")
-    n_colors = export_color_3mf(np.asarray(mesh.vertices, np.float64),
-                                np.asarray(mesh.faces, np.int64), vcolors, mf_path)
-    print(f"[print] wrote {mf_path}  ({n_colors} distinct colors)")
-
-    # --- 3) per-material STLs: one per distinct color region ---
-    # A face belongs to a region by the majority color of its 3 vertices.
-    face_rgb = vcolors[mesh.faces][:, :, :3]              # (F,3,3)
-    # pick each face's first-corner color as its label key (regions are flat per-face
-    # after palette_quantize's vertex-explode, so all 3 corners share a color)
-    keys = face_rgb[:, 0, :]
-    uniq, inv = np.unique(keys, axis=0, return_inverse=True)
-    # order regions by descending face count so material1 is the largest region
-    order = np.argsort(-np.bincount(inv, minlength=len(uniq)))
-    for k, ci in enumerate(order, start=1):
-        sel = inv == ci
-        sub = mesh.submesh([np.where(sel)[0]], append=True)
-        hexc = "%02x%02x%02x" % tuple(int(x) for x in uniq[ci])
-        part_path = os.path.join(a.out_dir, f"material{k}_{hexc}_{mm}mm.stl")
-        sub.export(part_path)
-        print(f"[print] wrote {part_path}  ({int(sel.sum())} faces, #{hexc})")
-
-    print(f"[print] SUCCESS: print set in {a.out_dir} at {mm} mm")
+    n_colors = export_face_color_3mf(np.asarray(mesh.vertices, np.float64),
+                                     np.asarray(mesh.faces, np.int64), face_rgb, mf_path)
+    print(f"[print] wrote {mf_path}  ({n_colors} colors, welded {len(mesh.vertices)}v/{len(mesh.faces)}f, "
+          f"watertight={mesh.is_watertight})")
+    print(f"[print] SUCCESS at {mm} mm")
 
 
 if __name__ == "__main__":
